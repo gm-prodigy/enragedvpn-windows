@@ -1,0 +1,135 @@
+﻿<Window x:Class="EnRagedVPN_GUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        mc:Ignorable="d"
+        Title="MainWindow"
+        Height="500"
+        Width="375"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        Loaded="Window_Loaded"
+        MouseDown="Window_MouseDown">
+
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <ContextMenu x:Key="cmButton">
+            <!--MenuItem Header="Logs" Click="MenuItem_Logger"/>-->
+            <Separator />
+            <MenuItem Header="Logout" Click="MenuItem_Logout"/>
+        </ContextMenu>
+        
+    </Window.Resources>
+    <Grid>
+        <Grid.Background>
+            <LinearGradientBrush StartPoint="1 0" EndPoint="0 0">
+                <LinearGradientBrush.GradientStops>
+                    <GradientStop Offset="1" Color="#4663D0" />
+                    <GradientStop Offset="0" Color="#317DBA" />
+                </LinearGradientBrush.GradientStops>
+            </LinearGradientBrush>
+        </Grid.Background>
+        <StackPanel>
+            <StackPanel>
+                <DockPanel Margin="0 5 0 10">
+                    <DockPanel HorizontalAlignment="Right">
+                        <Button Foreground="White" Margin="10 0" Click="Minimize_Window">
+                            <iconPacks:PackIconMaterial Kind="WindowMinimize"/>
+                        </Button>
+                        <Button Foreground="White"  Margin="10 0" Click="Window_Exit">
+                            <iconPacks:PackIconMaterial Kind="WindowClose" />
+                        </Button>
+                    </DockPanel>
+                </DockPanel>
+            </StackPanel>
+            <StackPanel Height="76">
+                <DockPanel>
+
+                    <Label Foreground="White" Height="50"  Width="50" HorizontalAlignment="Left" BorderBrush="Transparent">
+                        <Label.Background>
+                            <LinearGradientBrush StartPoint="1 0" EndPoint="0 1">
+                                <LinearGradientBrush.GradientStops>
+                                    <GradientStop Offset="0" Color="#3447B6" />
+                                    <GradientStop Offset="1" Color="#3545B7" />
+                                </LinearGradientBrush.GradientStops>
+                            </LinearGradientBrush>
+                        </Label.Background>
+                        <Grid>
+                            <Button Click="Menu_Context" Margin="-5,-5,-5,-5" />
+                            <iconPacks:PackIconMaterial Kind="Menu" Height="25" Width="24" HorizontalAlignment="Center" Margin="10" Foreground="White" />
+                        </Grid>
+                        
+                    </Label>
+                    <DockPanel Height="50" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5 0 0 0">
+                        <DockPanel.Background>
+                            <LinearGradientBrush StartPoint="1 0" EndPoint="0 1">
+                                <LinearGradientBrush.GradientStops>
+                                    <GradientStop Offset="1" Color="#3448B6" />
+                                    <GradientStop Offset="0" Color="#2F59B3" />
+                                </LinearGradientBrush.GradientStops>
+                            </LinearGradientBrush>
+                        </DockPanel.Background>
+                        <DockPanel Width="266">
+                            <Label Foreground="White" FontSize="24" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <Label.Content>
+                                    EnRagedVPN
+                                </Label.Content>
+                            </Label>
+                            <Label Name="transferUsage" Foreground="White" FontSize="14" HorizontalAlignment="Right" VerticalAlignment="Center">
+
+                            </Label>
+                        </DockPanel>
+                    </DockPanel>
+                </DockPanel>
+            </StackPanel>
+
+            <Button Name="ConnectionButton" Click="Connection_Button_Click" IsEnabled="True" Width="176">
+                <iconPacks:PackIconMaterial Name="ConnectionButtonIcon" Kind="Power" Foreground="White" Width="179" Height="175" />
+            </Button>
+            
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="49*" />
+                    <ColumnDefinition Width="76*" />
+                </Grid.ColumnDefinitions>
+                <Rectangle Margin="0,57,0,-29" Grid.ColumnSpan="2">
+                    <Rectangle.Fill>
+                        <LinearGradientBrush StartPoint="0 1" EndPoint="0 0">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Offset="1" Color="#000000ff" />
+                                <GradientStop Offset="0" Color="Black" />
+                            </LinearGradientBrush.GradientStops>
+                        </LinearGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+                <Grid Height="92" Grid.ColumnSpan="2" Margin="0,121,0,-121">
+                    <Grid.Background>
+                        <LinearGradientBrush StartPoint="1 0" EndPoint="0 1">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Offset="0" Color="#5189E5" />
+                                <GradientStop Offset="1" Color="#41AEE4" />
+                            </LinearGradientBrush.GradientStops>
+                        </LinearGradientBrush>
+                    </Grid.Background>
+                    <ComboBox Name="dropDownLocations" BorderBrush="Transparent" Background="Transparent" Margin="34,31,34,26" IsSynchronizedWithCurrentItem="True" SelectedIndex="1" FontFamily="Segoe UI" FontSize="16" AutomationProperties.HelpText="Select A Location"/>
+                </Grid>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</Window>

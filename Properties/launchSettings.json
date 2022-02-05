@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "enragedvpn": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}
