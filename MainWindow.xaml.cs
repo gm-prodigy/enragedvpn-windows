@@ -15,7 +15,7 @@ using static EnRagedGUI.Globals;
 using static EnRagedGUI.Events;
 
 
-namespace EnRagedVPN_GUI
+namespace EnRagedGUI
 {
 
     public partial class MainWindow : Window
@@ -30,6 +30,7 @@ namespace EnRagedVPN_GUI
             logPrintingThread = new Thread(new ThreadStart(TailLog));
             try { File.Delete(LogFile); } catch { }
             log = new Tunnel.Ringlogger(LogFile, "GUI");
+            Window_Loaded();
 
         }
 
@@ -116,7 +117,7 @@ namespace EnRagedVPN_GUI
             request.Timeout = 10000;
 
             // write the "Authorization" header
-            request.Headers.Add("Authorization: Bearer " + EnRagedGUI.Properties.Settings.Default.token);
+            request.Headers.Add("Authorization: Bearer " + Properties.Settings.Default.token);
             request.Method = "GET";
 
             // get the response
@@ -124,10 +125,10 @@ namespace EnRagedVPN_GUI
             using StreamReader reader = new(response.GetResponseStream());
             var ServerObject = System.Text.Json.JsonSerializer.Deserialize<Root>(reader.ReadToEnd());
 
-
-            var certificate = ServerObject.certificate.data;
-
-            return $@"[Interface]
+            try
+            {
+                var certificate = ServerObject.certificate.data;
+                return $@"[Interface]
 PrivateKey = {certificate.Interface.PrivateKey}
 Address = {certificate.Interface.Address}
 DNS = {certificate.Interface.DNS}
@@ -137,6 +138,13 @@ PublicKey = {certificate.Peer.PublicKey}
 PresharedKey = {certificate.Peer.PresharedKey}
 EndPoint = {certificate.Peer.Endpoint}
 AllowedIPs = 0.0.0.0/0, ::0/0";
+            }catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
+
+            return "";
         }
 
         public class Root
@@ -189,7 +197,7 @@ AllowedIPs = 0.0.0.0/0, ::0/0";
             public string DNS { get; set; }
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private static void Window_Loaded()
         {
             ThreadsRunning = true;
             logPrintingThread.Start();
@@ -232,8 +240,8 @@ AllowedIPs = 0.0.0.0/0, ::0/0";
 
         private void MenuItem_Logout(object sender, RoutedEventArgs e)
         {
-            EnRagedGUI.Properties.Settings.Default.token = "";
-            EnRagedGUI.Properties.Settings.Default.Save();
+            Properties.Settings.Default.token = "";
+            Properties.Settings.Default.Save();
             if (Connected)
             {
                 ConnectionButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -243,12 +251,5 @@ AllowedIPs = 0.0.0.0/0, ::0/0";
 
             this.Close();
         }
-
-        private void MenuItem_Logger(object sender, RoutedEventArgs e)
-        {
-            Logger logs = new Logger();
-            logs.Show();
-        }
-
     }
 }

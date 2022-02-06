@@ -10,7 +10,7 @@ namespace EnRagedGUI
 {
     internal class Globals
     {
-        public const string API_IP = "http://192.168.0.38:3002/";
+        public const string API_IP = "https://api.enragedvpn.com/";
         public static bool Connected;
         public static string ConnectionButtonColour = "White";
         public static readonly string UserDirectory = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath), "Config");

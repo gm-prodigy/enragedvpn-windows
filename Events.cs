@@ -1,16 +1,7 @@
-﻿using EnRagedVPN_GUI;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Navigation;
-using Xceed.Wpf.AvalonDock.Layout;
 using static EnRagedGUI.Globals;
 
 namespace EnRagedGUI
@@ -64,6 +55,7 @@ namespace EnRagedGUI
 
         public static void TailLog()
         {
+            Console.WriteLine("hey");
             var cursor = Tunnel.Ringlogger.CursorAll;
             while (ThreadsRunning)
             {

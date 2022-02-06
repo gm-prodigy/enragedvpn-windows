@@ -9,8 +9,9 @@
         Width="375"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
-        WindowStyle="None"
+        WindowStyle="ThreeDBorderWindow"
         >
+
     <Window.Resources>
         <Style TargetType="Button">
             <Setter Property="Template">
@@ -38,18 +39,7 @@
             </LinearGradientBrush>
         </Grid.Background>
         <StackPanel>
-            <StackPanel>
-                <DockPanel Margin="0 5 0 10">
-                    <DockPanel HorizontalAlignment="Right">
-                        <Button Foreground="White" Margin="10 0" Click="Minimize_Window">
-                            <iconPacks:PackIconMaterial Kind="WindowMinimize" />
-                        </Button>
-                        <Button Foreground="White"  Margin="10 0" Click="Button_Click">
-                            <iconPacks:PackIconMaterial Kind="WindowClose" />
-                        </Button>
-                    </DockPanel>
-                </DockPanel>
-            </StackPanel>
+            <StackPanel/>
             <StackPanel Height="76">
                 <DockPanel>
 

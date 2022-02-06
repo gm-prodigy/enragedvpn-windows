@@ -1,5 +1,4 @@
 ﻿using EnRagedGUI.Properties;
-using EnRagedVPN_GUI;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -13,6 +12,18 @@ namespace EnRagedGUI
         [STAThread]
         public static void Main(string[] args)
         {
+
+            // Named Mutexes are available computer-wide. Use a unique name.
+            using var mutex = new Mutex(false, "EnRagedVPN");
+            // TimeSpan.Zero to test the mutex's signal state and
+            // return immediately without blocking
+            bool isAnotherInstanceOpen = !mutex.WaitOne(TimeSpan.Zero);
+            if (isAnotherInstanceOpen)
+            {
+                MessageBox.Show("Only one instance of EnRagedVPN may be running at one point!");
+                return;
+            }
+
             if (args.Length == 3 && args[0] == "/service")
             {
                 var t = new Thread(() =>
@@ -34,9 +45,13 @@ namespace EnRagedGUI
                 return;
             }
 
-            EntryApplication app = new EntryApplication();
+            EntryApplication app = new();
             app.DispatcherUnhandledException += App_DispatcherUnhandledException;
             app.Run();
+
+            mutex.ReleaseMutex();
+
+
         }
 
         private static void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)

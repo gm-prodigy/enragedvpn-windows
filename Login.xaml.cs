@@ -1,11 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿
 using System;
 using System.IO;
 using System.Net;
 using System.Windows;
-using System.Text.Json;
-using EnRagedVPN_GUI;
-using System.Windows.Input;
 
 namespace EnRagedGUI
 {
@@ -75,9 +72,10 @@ namespace EnRagedGUI
 
                 if (!userObject.error)
                 {
-                    MainWindow MainWindow = new();
-                    this.Hide();
-                    MainWindow.Show();
+                    MainWindow window = new();
+                    window.Show();
+
+                    this.Close();
                 }
                 else
                 {
