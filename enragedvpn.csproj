@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0-windows</TargetFramework>
     <RootNamespace>EnRagedGUI</RootNamespace>
     <UseWindowsForms>False</UseWindowsForms>
     <AssemblyName>EnRagedVPN</AssemblyName>
-    <Platforms>x64;AnyCPU</Platforms>
+    <Platforms>x64;AnyCPU;x86</Platforms>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <StartupObject></StartupObject>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
@@ -14,11 +14,17 @@
     <NeutralLanguage>en</NeutralLanguage>
     <Copyright>EnRaged Services</Copyright>
     <Authors>$(AssemblyName): Gm Prodigy</Authors>
-    <ApplicationManifest>EnRagedGUI\app.manifest</ApplicationManifest>
     <UseWPF>True</UseWPF>
+    <PackageIcon>enragedvpn_logo.png</PackageIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <DefineConstants>TRACE</DefineConstants>
+    <PlatformTarget>x64</PlatformTarget>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <DefineConstants>TRACE</DefineConstants>
     <PlatformTarget>x64</PlatformTarget>
     <Optimize>true</Optimize>
@@ -65,6 +71,8 @@
     </None>
     <None Update="assets\enragedvpn_logo.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
     </None>
     <None Update="assets\Enraged_White.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

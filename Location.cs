@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EnRagedGUI.EnRagedGUI
+namespace EnRagedGUI
 {
     public class Location
     {

@@ -1,16 +1,18 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 
-namespace EnRagedGUI.EnRagedGUI;
+namespace EnRagedGUI;
 
 class ShowLocations
 {
 
     static ShowLocations()
     {
+        
         using var webClient = new HttpClient();
         string rawJSON = null;
         try

@@ -1,7 +1,8 @@
-﻿
-using System;
-using System.IO;
-using System.Net;
+﻿using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace EnRagedGUI
@@ -25,84 +26,81 @@ namespace EnRagedGUI
             public int maxConnections { get; set; }
             public long tokenExipry { get; set; }
         }
-
-        public class content
-        {
-            public string email { get; set; }
-            public string password { get; set; }
-        }
         public class Root
         {
             public bool error { get; set; }
             public int status { get; set; }
             public User user { get; set; }
         }
-        private void GetToken()
+
+        static bool IsValidEmail(string email)
         {
-            var url = $"{Globals.API_IP}auth/login";
-            var httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
-            httpWebRequest.ContentType = "application/json; charset=utf-8";
-            httpWebRequest.Method = "POST";
-            httpWebRequest.Accept = "application/json; charset=utf-8";
+            var trimmedEmail = email.Trim();
 
-            using var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream());
-
-
+            if (trimmedEmail.EndsWith("."))
+            {
+                return false;
+            }
             try
             {
-                var loginContent = new content
-                {
-                    email = textBoxEmail.Text.Trim(),
-                    password = passwordBox1.Password.Trim()
-                };
-                string jsonString = System.Text.Json.JsonSerializer.Serialize(loginContent);
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == trimmedEmail;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
-                streamWriter.Write(jsonString);
-                streamWriter.Flush();
-                streamWriter.Close();
+        private async Task GetTokenAsync()
+        {
+            var email = EmailTextBox.Text.Trim();
+            var password = PasswordTextBox.Password.Trim();
 
-                var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-                using var streamReader = new StreamReader(httpResponse.GetResponseStream());
-                var result = streamReader.ReadToEnd().ToString();
-                System.Diagnostics.Debug.WriteLine(result);
-                var userObject = System.Text.Json.JsonSerializer.Deserialize<Root>(result);
-                //System.Diagnostics.Debug.WriteLine($"email: { userObject}");
-                Properties.Settings.Default["token"] = userObject.user.token;
+            if (!IsValidEmail(email))
+            {
+                MessageBox.Show("Email not valid!");
+                throw new Exception("Email not valid!");
+            }
+            using var client = new HttpClient();
+            client.BaseAddress = new Uri(Globals.API_IP);
+            client.Timeout = TimeSpan.FromSeconds(5);
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            
+            //login data
+            var formContent = new FormUrlEncodedContent(new[]
+            {
+                    new KeyValuePair<string, string>("email", email),
+                    new KeyValuePair<string, string>("password", password)
+                });
+            
+            //send request
+            HttpResponseMessage responseMessage = await client.PostAsync("/auth/login", formContent);
+
+            var responseJson = await responseMessage.Content.ReadAsStringAsync();
+
+            var userObject = System.Text.Json.JsonSerializer.Deserialize<Root>(responseJson);
+
+            System.Diagnostics.Debug.WriteLine(userObject.status);
+            if (userObject.status == 200)
+            {
+                Properties.Settings.Default.token = userObject.user.token;
                 Properties.Settings.Default.Save();
 
-                if (!userObject.error)
-                {
-                    MainWindow window = new();
-                    window.Show();
-
-                    this.Close();
-                }
-                else
-                {
-                    MessageBox.Show("Your credentials are invalid!");
-                }
+                MainWindow window = new();
+                window.Show();
+                this.Close();
             }
-            catch (Exception err)
+            else if (userObject.status == 404)
             {
-                MessageBox.Show(err.Message);
-                System.Diagnostics.Debug.WriteLine(err.Message);
+                MessageBox.Show("Wrong username or password!");
             }
         }
 
-        private void button1_Click(object sender, RoutedEventArgs e)
+        private void Login_Button_Click(object sender, RoutedEventArgs e)
         {
-            GetToken();
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            System.Windows.Application.Current.Shutdown();
-        }
-
-
-        private void Minimize_Window(object sender, RoutedEventArgs e)
-        {
-            WindowState = WindowState.Minimized;
+            _ = GetTokenAsync();
         }
 
     }
