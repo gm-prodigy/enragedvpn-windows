@@ -1,36 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using static EnRagedGUI.JsonObjects.LoginJsonClass;
 
 namespace EnRagedGUI
 {
     /// <summary>
-    /// Interaction logic for Login.xaml
+    /// Interaction logic for Page1.xaml
     /// </summary>
-    public partial class Login : Window
+    public partial class Login : Page
     {
         public Login()
         {
             InitializeComponent();
-        }
-        public class User
-        {
-            public string id { get; set; }
-            public string email { get; set; }
-            public int userId { get; set; }
-            public string token { get; set; }
-            public bool active { get; set; }
-            public int maxConnections { get; set; }
-            public long tokenExipry { get; set; }
-        }
-        public class Root
-        {
-            public bool error { get; set; }
-            public int status { get; set; }
-            public User user { get; set; }
         }
 
         static bool IsValidEmail(string email)
@@ -67,14 +62,14 @@ namespace EnRagedGUI
             client.Timeout = TimeSpan.FromSeconds(5);
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            
+
             //login data
             var formContent = new FormUrlEncodedContent(new[]
             {
                     new KeyValuePair<string, string>("email", email),
                     new KeyValuePair<string, string>("password", password)
                 });
-            
+
             //send request
             HttpResponseMessage responseMessage = await client.PostAsync("/auth/login", formContent);
 
@@ -88,9 +83,8 @@ namespace EnRagedGUI
                 Properties.Settings.Default.token = userObject.user.token;
                 Properties.Settings.Default.Save();
 
-                MainWindow window = new();
-                window.Show();
-                this.Close();
+                MainWindow mainWindow = Application.Current.MainWindow as MainWindow;
+                mainWindow.Content = new Dashboard(false);
             }
             else if (userObject.status == 404)
             {

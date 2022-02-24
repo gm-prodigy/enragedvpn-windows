@@ -2,20 +2,28 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
     <RootNamespace>EnRagedGUI</RootNamespace>
     <UseWindowsForms>False</UseWindowsForms>
     <AssemblyName>EnRagedVPN</AssemblyName>
     <Platforms>x64;AnyCPU;x86</Platforms>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <StartupObject></StartupObject>
+    <StartupObject>EnRagedGUI.EntryPoint</StartupObject>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <Nullable>disable</Nullable>
     <NeutralLanguage>en</NeutralLanguage>
     <Copyright>EnRaged Services</Copyright>
-    <Authors>$(AssemblyName): Gm Prodigy</Authors>
+    <Authors>Gm Prodigy</Authors>
     <UseWPF>True</UseWPF>
     <PackageIcon>enragedvpn_logo.png</PackageIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <ApplicationIcon>assets\favicon.ico</ApplicationIcon>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+    <SignAssembly>False</SignAssembly>
+    <Description>A graphical user interface for connecting to EnRagedVPN's services.</Description>
+    <FileVersion>0.0.1</FileVersion>
+    <AssemblyVersion></AssemblyVersion>
+    <Company>EnRaged Services</Company>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -41,8 +49,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="assets\favicon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MahApps.Metro.IconPacks" Version="4.11.0" />
+    <PackageReference Include="MaterialDesignColors" Version="2.0.4" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="ShowMeTheXAML.MSBuild" Version="2.0.0" />
+    <PackageReference Include="ToggleSwitch" Version="1.2.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -70,27 +85,31 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="assets\enragedvpn_logo.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
     <None Update="assets\Enraged_White.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <None Update="tunnel.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="wireguard.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Properties\DataSources\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Include="App.xaml" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,21 +1,15 @@
-﻿<Window x:Class="EnRagedGUI.Login"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+﻿<Page x:Class="EnRagedGUI.Login"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:EnRagedGUI"
+      mc:Ignorable="d" 
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+      d:DesignHeight="500" d:DesignWidth="375"
+      Title="Page1">
 
-        mc:Ignorable="d"
-        Title="Login"
-        Height="500"
-        Width="375"
-        WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize"
-        Background="Transparent"
-        WindowStyle="ThreeDBorderWindow"
-        >
-
-    <Window.Resources>
+    <Page.Resources>
         <Style TargetType="{x:Type Button}">
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontFamily" Value="Helvetica"/>
@@ -43,7 +37,8 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
-    </Window.Resources>
+    </Page.Resources>
+
     <Grid>
         <Grid>
             <Grid.RowDefinitions>
@@ -52,7 +47,7 @@
             </Grid.RowDefinitions>
 
 
-            <Border CornerRadius="10" Grid.RowSpan="2">
+            <Border Grid.RowSpan="2">
                 <Border.Background>
                     <LinearGradientBrush>
                         <GradientStop Color="#181818" Offset="0.0"/>
@@ -63,7 +58,6 @@
 
 
             <StackPanel VerticalAlignment="Center">
-                <Image Source="Images/House.png" Width="80"/>
                 <TextBlock Text="EnRagedVPN"
                            FontWeight="Light"
                            FontFamily="helvetica"
@@ -93,7 +87,7 @@
                              HorizontalContentAlignment="Left"
                              Opacity="0.5"
                              Height="25"
-                             Margin="63,0,0,0"
+                             Margin="63,0,0,0" InputScope="EmailUserName"
                              />
                     <iconPacks:PackIconMaterial Kind="Account" 
                                                 VerticalAlignment="Center" 
@@ -121,7 +115,7 @@
                              HorizontalContentAlignment="Left"
                              Opacity="0.5"
                              Height="25"
-                             Margin="63,0,0,0"/>
+                             Margin="63,0,0,0" InputScope="Password"/>
 
                 </StackPanel>
                 <Border Width="250"
@@ -144,4 +138,4 @@
 
         </Grid>
     </Grid>
-</Window>
+</Page>

@@ -34,5 +34,29 @@ namespace EnRagedGUI.Properties {
                 this["token"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool KillSwitch {
+            get {
+                return ((bool)(this["KillSwitch"]));
+            }
+            set {
+                this["KillSwitch"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool isConnected {
+            get {
+                return ((bool)(this["isConnected"]));
+            }
+            set {
+                this["isConnected"] = value;
+            }
+        }
     }
 }

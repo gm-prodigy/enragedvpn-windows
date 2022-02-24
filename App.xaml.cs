@@ -1,12 +1,15 @@
-﻿using EnRagedGUI.Properties;
-using System;
+﻿using System;
 using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Windows;
 
+
 namespace EnRagedGUI
 {
-    public class EntryPoint
+
+    public partial class EntryPoint
     {
         // All WPF applications should execute on a single-threaded apartment (STA) thread
         [STAThread]
@@ -66,18 +69,8 @@ namespace EnRagedGUI
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-
-            if (Settings.Default.token != "")
-            {
-                MainWindow window = new();
-                window.Show();
-            }
-            else
-            {
-                Login login = new();
-                login.Show();
-            }
-
+            MainWindow window = new();
+            window.Show();
 
         }
     }

@@ -1,18 +1,16 @@
-﻿<Window x:Class="EnRagedGUI.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks" 
-        mc:Ignorable="d"
-        Title="EnRagedVPN"
-        Height="500"
-        Width="375"
-        WindowStartupLocation="CenterScreen"
-        Loaded="Window_Loaded_1"
-        ResizeMode="NoResize" WindowStyle="ThreeDBorderWindow" Icon="/enragedvpn_logo.png">
+﻿<Page x:Class="EnRagedGUI.Dashboard"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:EnRagedGUI"
+      xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks" 
+      mc:Ignorable="d" 
+      d:DesignHeight="500" d:DesignWidth="375"
+      Loaded="Dashboard_Page_Loaded"
+      Title="Dashboard">
 
-    <Window.Resources>
+    <Page.Resources>
 
         <Style TargetType="Button">
             <Setter Property="Template">
@@ -30,13 +28,7 @@
             </Style.Triggers>
         </Style>
 
-    </Window.Resources>
-    <Window.TaskbarItemInfo>
-        <TaskbarItemInfo Description="EnRaged Your Connection!"/>
-    </Window.TaskbarItemInfo>
-    <Window.Effect>
-        <DropShadowEffect/>
-    </Window.Effect>
+    </Page.Resources>
     <Grid>
 
         <Grid.Background>
@@ -48,7 +40,6 @@
             </LinearGradientBrush>
         </Grid.Background>
         <StackPanel>
-            <StackPanel/>
             <StackPanel Height="56" Width="376">
                 <DockPanel>
 
@@ -66,20 +57,12 @@
                         </Label.Background>
                         <Grid>
 
-                            <iconPacks:PackIconMaterial Kind="Menu" Height="25" Width="24" HorizontalAlignment="Center" Margin="10" Foreground="White" >
+                            <iconPacks:PackIconMaterial Kind="Menu" Height="25" Width="24" Margin="10" Foreground="White" >
                                 <iconPacks:PackIconMaterial.Effect>
                                     <DropShadowEffect/>
                                 </iconPacks:PackIconMaterial.Effect>
                             </iconPacks:PackIconMaterial>
-                            <MenuItem Click="MenuButton_Click" Name="MenuButtonMainWindow">
-                                <MenuItem.ContextMenu>
-                                    <ContextMenu>
-                                        <MenuItem Header="Logs" Click="MenuItem_Logs"/>
-                                        <MenuItem Header="Logout" Click="MenuItem_Logout"/>
-                                    </ContextMenu>
-                                </MenuItem.ContextMenu>
-                            </MenuItem>
-
+                            <Button Click="Settingsaa"></Button>
                         </Grid>
 
                     </Label>
@@ -118,13 +101,12 @@
                         <DropShadowEffect/>
                     </iconPacks:PackIconMaterial.Effect>
                 </iconPacks:PackIconMaterial>
-                <Button Name="ConnectionButton" Click="Connection_Button_Click" IsEnabled="True" Width="135" HorizontalAlignment="Center" Margin="0,34,0,227">
-                </Button>
+                <Button Name="ConnectionButton" Click="Connection_Button_Click" IsEnabled="True" Width="135" HorizontalAlignment="Center" Margin="0,34,0,227"/>
 
 
 
 
-                <Label x:Name="ExternalIP"  Foreground="White" FontSize="14" HorizontalAlignment="Center" Margin="0,250,0,0" VerticalAlignment="Top" Height="34" FontStyle="Normal" FontWeight="Normal">
+                <Label x:Name="ExternalIP"  Foreground="White" FontSize="14" HorizontalAlignment="Center" Margin="0,250,0,0" VerticalAlignment="Top" Height="34" FontStyle="Normal" FontWeight="Normal" BorderBrush="Black">
                     <Label.Effect>
                         <DropShadowEffect/>
                     </Label.Effect>
@@ -132,6 +114,16 @@
                         External IP: 127.0.0.1
                     </Label.Content>
                 </Label>
+                <Label x:Name="Usage"  Foreground="White" FontSize="14" HorizontalAlignment="Center" Margin="0,276,0,0" VerticalAlignment="Top" Height="34" FontStyle="Normal" FontWeight="Normal" BorderBrush="Black" Visibility="Hidden">
+                    <Label.Effect>
+                        <DropShadowEffect/>
+                    </Label.Effect>
+                    <Label.Content>
+                        Usage: 127.0.0.1
+                    </Label.Content>
+                </Label>
+
+
 
                 <Grid Height="92" Margin="0,315,-6,0">
                     <Grid.Background>
@@ -140,11 +132,12 @@
                             <GradientStop Offset="1" Color="#181818" />
                         </LinearGradientBrush>
                     </Grid.Background>
-                    <ComboBox x:Name="dropDownLocations" BorderBrush="Transparent" Background="Transparent" Margin="27,29,41,28" IsSynchronizedWithCurrentItem="True" SelectedIndex="1" FontFamily="Segoe UI" FontSize="16" AutomationProperties.HelpText="Select A Location"/>
+                    <ComboBox x:Name="dropDownLocations" BorderBrush="Transparent" VerticalContentAlignment="Center" Background="Transparent" Margin="27,29,41,28" IsSynchronizedWithCurrentItem="True" SelectedIndex="1" FontFamily="Segoe UI" FontSize="16" AutomationProperties.HelpText="Select A Location" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                 </Grid>
             </Grid>
 
-            <Grid Name="ConsoleLogsGrids" Height="402" Width="355" Visibility="Hidden" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid Name="ConsoleLogsGrids"  Height="402" Width="355" Visibility="Hidden" HorizontalAlignment="Center" VerticalAlignment="Center">
+
                 <Grid.RenderTransform>
                     <TransformGroup>
                         <ScaleTransform ScaleY="-1"/>
@@ -172,8 +165,11 @@
                         </TransformGroup>
                     </TextBox.RenderTransform>
                 </TextBox>
+                <Button Click="MenuItem_Logs"  Margin="326,369,0,4" Foreground="White" FontSize="18">
+                    X
+                </Button>
             </Grid>
 
         </StackPanel>
     </Grid>
-</Window>
+</Page>
