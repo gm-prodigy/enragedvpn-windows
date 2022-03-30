@@ -1,9 +1,10 @@
 ﻿using EnRagedGUI.Properties;
+using FluentScheduler;
 using System;
 using System.IO;
-using System.Security.AccessControl;
-using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using static EnRagedGUI.Globals;
 
 namespace EnRagedGUI
@@ -16,13 +17,25 @@ namespace EnRagedGUI
         {
             MakeConfigDirectory();
             InitializeComponent();
-            StartUpEvents();
+            _ = StartUpEventsAsync();
             try { File.Delete(LogFile); } catch { }
             log = new Tunnel.Ringlogger(LogFile, "GUI");
+
+            JobManager.Initialize();
         }
 
-        private void StartUpEvents()
+        private async Task StartUpEventsAsync()
         {
+            CheckForUpdate();
+            try
+            {
+                JobManager.AddJob(() => log.Write("1 minutes just passed."), s => s.ToRunEvery(1).Minutes());
+                JobManager.AddJob(() => CheckForUpdate(), s => s.ToRunEvery(100).Minutes());
+            }
+            catch { }
+
+
+
             if (Settings.Default.token != "")
             {
                 MainWindowFrame.Content = new Dashboard(false);
@@ -38,9 +51,10 @@ namespace EnRagedGUI
         {
             try
             {
-                var ds = new DirectorySecurity();
-                ds.SetSecurityDescriptorSddlForm("O:BAG:BAD:PAI(A;OICI;FA;;;BA)(A;OICI;FA;;;SY)");
-                FileSystemAclExtensions.CreateDirectory(ds, UserDirectory);
+                //var ds = new DirectorySecurity();
+                //ds.SetSecurityDescriptorSddlForm("O:BAG:BAD:PAI(A;OICI;FA;;;BA)(A;OICI;FA;;;SY)");
+                //FileSystemAclExtensions.CreateDirectory(ds, UserDirectory);
+                Directory.CreateDirectory(UserDirectory);
             }
             catch
             {
@@ -51,8 +65,17 @@ namespace EnRagedGUI
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            Settings.Default.Save();
             Environment.Exit(0);
         }
 
+        private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ButtonState == MouseButtonState.Pressed)
+            {
+
+                this.DragMove();
+            }
+        }
     }
 }

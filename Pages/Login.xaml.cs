@@ -1,19 +1,13 @@
-﻿using System;
+﻿using MaterialDesignThemes.Wpf;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using static EnRagedGUI.JsonObjects.LoginJsonClass;
 
 namespace EnRagedGUI
@@ -27,6 +21,10 @@ namespace EnRagedGUI
         {
             InitializeComponent();
         }
+
+        //Theme Code ========================>
+        public bool IsDarkTheme { get; set; }
+        private readonly PaletteHelper paletteHelper = new PaletteHelper();
 
         static bool IsValidEmail(string email)
         {
@@ -49,8 +47,12 @@ namespace EnRagedGUI
 
         private async Task GetTokenAsync()
         {
-            var email = EmailTextBox.Text.Trim();
-            var password = PasswordTextBox.Password.Trim();
+            //var email = EmailTextBox.Text.Trim();
+            //var password = PasswordTextBox.Password.Trim();
+            //var email = "";
+            //var password = "";
+            var email = txtUsername.Text.Trim();
+            var password = txtPassword.Password.Trim();
 
             if (!IsValidEmail(email))
             {
@@ -77,18 +79,24 @@ namespace EnRagedGUI
 
             var userObject = System.Text.Json.JsonSerializer.Deserialize<Root>(responseJson);
 
-            System.Diagnostics.Debug.WriteLine(userObject.status);
-            if (userObject.status == 200)
+            System.Diagnostics.Debug.WriteLine(userObject.code);
+            if (userObject.code == 200)
             {
                 Properties.Settings.Default.token = userObject.user.token;
+                Properties.Settings.Default.RefreshToken = userObject.user.refreshToken;
+                Properties.Settings.Default.Email = email;
                 Properties.Settings.Default.Save();
 
                 MainWindow mainWindow = Application.Current.MainWindow as MainWindow;
                 mainWindow.Content = new Dashboard(false);
             }
-            else if (userObject.status == 404)
+            else if (userObject.code == 401)
             {
                 MessageBox.Show("Wrong username or password!");
+            }
+            else
+            {
+                MessageBox.Show("Not sure what went wrong!");
             }
         }
 
@@ -96,6 +104,38 @@ namespace EnRagedGUI
         {
             _ = GetTokenAsync();
         }
+
+        private void toggleTheme(object sender, RoutedEventArgs e)
+        {
+
+            //get the current theme used in the application
+            ITheme theme = paletteHelper.GetTheme();
+
+            //if condition true, then set IsDarkTheme to false and, SetBaseTheme to light
+            if (IsDarkTheme = theme.GetBaseTheme() == BaseTheme.Dark)
+            {
+                IsDarkTheme = false;
+                theme.SetBaseTheme(Theme.Light);
+                LoginLogo.Source = new BitmapImage(new Uri(@"/Pages/Enraged_Black.png", UriKind.RelativeOrAbsolute));
+            }
+
+            //else set IsDarkTheme to true and SetBaseTheme to dark
+            else
+            {
+                IsDarkTheme = true;
+                theme.SetBaseTheme(Theme.Dark);
+                LoginLogo.Source = new BitmapImage(new Uri(@"/Pages/Enraged_White.png", UriKind.RelativeOrAbsolute));
+            }
+
+            //to apply the changes use the SetTheme function
+            paletteHelper.SetTheme(theme);
+        }
+
+        private void exitApp(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+
 
     }
 }

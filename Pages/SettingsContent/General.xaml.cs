@@ -34,14 +34,12 @@ namespace EnRagedGUI.Pages.SettingsContent
             {
                 // Code for Checked state
                 Properties.Settings.Default.KillSwitch = true;
-                Properties.Settings.Default.Save();
 
             }
             else
             {
                 // Code for Un-Checked state
                 Properties.Settings.Default.KillSwitch = false;
-                Properties.Settings.Default.Save();
             }
         }
 

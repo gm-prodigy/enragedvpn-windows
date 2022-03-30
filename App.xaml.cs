@@ -1,19 +1,20 @@
-﻿using System;
+﻿using Squirrel;
+using System;
 using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
+using static EnRagedGUI.Properties.Settings;
 
+using System.Reflection;
+using System.Security.Principal;
 
 namespace EnRagedGUI
 {
 
-    public partial class EntryPoint
+    public partial class App : Application
     {
-        // All WPF applications should execute on a single-threaded apartment (STA) thread
-        [STAThread]
-        public static void Main(string[] args)
+        protected override void OnStartup(StartupEventArgs e)
         {
 
             // Named Mutexes are available computer-wide. Use a unique name.
@@ -27,51 +28,71 @@ namespace EnRagedGUI
                 return;
             }
 
-            if (args.Length == 3 && args[0] == "/service")
+
+            if (!IsRunAsAdministrator())
             {
-                var t = new Thread(() =>
+                // It is not possible to launch a ClickOnce app as administrator directly, so instead we launch the
+                // app as administrator in a new process.
+                String appStartPath = System.IO.Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+
+                var processInfo = new ProcessStartInfo(appStartPath + @"\EnRagedVPN.exe");
+
+                // The following properties run the new process as administrator
+                processInfo.UseShellExecute = true;
+                processInfo.Verb = "runas";
+
+                // Start the new process
+                try
                 {
-                    try
-                    {
-                        var currentProcess = Process.GetCurrentProcess();
-                        var uiProcess = Process.GetProcessById(int.Parse(args[2]));
-                        if (uiProcess.MainModule.FileName != currentProcess.MainModule.FileName)
-                            return;
-                        uiProcess.WaitForExit();
-                        Tunnel.Service.Remove(args[1], false);
-                    }
-                    catch { }
-                });
-                t.Start();
-                Tunnel.Service.Run(args[1]);
-                t.Interrupt();
-                return;
+                    Process.Start(processInfo);
+                }
+                catch (Exception)
+                {
+                    // The user did not allow the application to run as administrator
+                    MessageBox.Show("Sorry, this application must be run as Administrator.");
+                }
             }
+            else
+            {
+                if (e.Args.Length == 3 && e.Args[0] == "/service")
+                {
+                    var t = new Thread(() =>
+                    {
+                        try
+                        {
+                            var currentProcess = Process.GetCurrentProcess();
+                            var uiProcess = Process.GetProcessById(int.Parse(e.Args[2]));
+                            if (uiProcess.MainModule.FileName != currentProcess.MainModule.FileName)
+                                return;
+                            uiProcess.WaitForExit();
+                            Tunnel.Service.Remove(e.Args[1], false);
+                        }
+                        catch { }
+                    });
+                    t.Start();
+                    Tunnel.Service.Run(e.Args[1]);
+                    t.Interrupt();
+                    return;
+                }
 
-            EntryApplication app = new();
-            app.DispatcherUnhandledException += App_DispatcherUnhandledException;
-            app.Run();
-
+                DispatcherUnhandledException += App_DispatcherUnhandledException;
+            }
             mutex.ReleaseMutex();
+            base.OnStartup(e);
+        }
 
+        private static bool IsRunAsAdministrator()
+        {
+            var wi = WindowsIdentity.GetCurrent();
+            var wp = new WindowsPrincipal(wi);
 
+            return wp.IsInRole(WindowsBuiltInRole.Administrator);
         }
 
         private static void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
             string errorMessage = string.Format("An unhandled exception occurred: {0}", e.Exception.Message);
             MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
-    }
-
-    public class EntryApplication : Application
-    {
-        protected override void OnStartup(StartupEventArgs e)
-        {
-            base.OnStartup(e);
-            MainWindow window = new();
-            window.Show();
-
         }
     }
 }

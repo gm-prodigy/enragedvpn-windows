@@ -11,7 +11,8 @@ namespace EnRagedGUI.JsonObjects
         public class Root
         {
             public bool error { get; set; }
-            public int status { get; set; }
+            public int code { get; set; }
+            public string message { get; set; }
             public Certificate certificate { get; set; }
         }
 

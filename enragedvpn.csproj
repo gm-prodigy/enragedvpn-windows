@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <RootNamespace>EnRagedGUI</RootNamespace>
     <UseWindowsForms>False</UseWindowsForms>
     <AssemblyName>EnRagedVPN</AssemblyName>
     <Platforms>x64;AnyCPU;x86</Platforms>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <StartupObject>EnRagedGUI.EntryPoint</StartupObject>
+    <StartupObject>EnRagedGUI.App</StartupObject>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <Nullable>disable</Nullable>
     <NeutralLanguage>en</NeutralLanguage>
@@ -15,15 +15,17 @@
     <Authors>Gm Prodigy</Authors>
     <UseWPF>True</UseWPF>
     <PackageIcon>enragedvpn_logo.png</PackageIcon>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
     <TargetFramework>net6.0-windows</TargetFramework>
-    <ApplicationIcon>assets\favicon.ico</ApplicationIcon>
-    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <SignAssembly>False</SignAssembly>
     <Description>A graphical user interface for connecting to EnRagedVPN's services.</Description>
-    <FileVersion>0.0.1</FileVersion>
+    <FileVersion>1.0.0.2</FileVersion>
     <AssemblyVersion></AssemblyVersion>
     <Company>EnRaged Services</Company>
+    <Version>1.0.1</Version>
+    <BaseOutputPath></BaseOutputPath>
+    <IsPublishable>True</IsPublishable>
+    <ApplicationIcon>assets\favicon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -45,19 +47,34 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="enragedvpn_logo.png" />
+    <None Remove="assets\Enraged_Black.png" />
+    <None Remove="assets\Enraged_White.png" />
+    <None Remove="Pages\enragedvpn_logo.png" />
+    <None Remove="Pages\Enraged_Black.png" />
+    <None Remove="Pages\Enraged_White.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="assets\favicon.ico" />
+    <Content Include="assets\favicon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="assets\Enraged_Black.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Resource Include="assets\favicon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentScheduler" Version="5.5.1" />
     <PackageReference Include="MahApps.Metro.IconPacks" Version="4.11.0" />
-    <PackageReference Include="MaterialDesignColors" Version="2.0.4" />
+    <PackageReference Include="MaterialDesignThemes" Version="4.4.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="ShowMeTheXAML.MSBuild" Version="2.0.0" />
-    <PackageReference Include="ToggleSwitch" Version="1.2.0" />
+    <PackageReference Include="squirrel.windows" Version="1.9.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -85,18 +102,17 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="assets\enragedvpn_logo.png">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
-    </None>
-    <None Update="assets\Enraged_White.png">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <None Update="tunnel.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Update.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="wireguard.dll">
@@ -113,7 +129,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="enragedvpn_logo.png" />
+    <Resource Include="assets\enragedvpn_logo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </Resource>
+    <Content Include="assets\Enraged_White.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Resource Include="Pages\enragedvpn_logo.png" />
+    <Resource Include="Pages\Enraged_Black.png" />
+    <Resource Include="Pages\Enraged_White.png" />
   </ItemGroup>
+
 
 </Project>

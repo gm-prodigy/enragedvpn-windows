@@ -5,7 +5,9 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using static EnRagedGUI.JsonObjects.MainApiJsonClass;
+using static EnRagedGUI.Properties.Settings;
 
 namespace EnRagedGUI.Helper
 {
@@ -28,6 +30,7 @@ namespace EnRagedGUI.Helper
             //log.Write("Generating keys");
             //log.Write("Exchanging keys with EnRaged Services");
             //log.Write("Generating Configuration");
+            Default.LastLocationId = selectedLocation;
 
             using var client = new HttpClient();
             client.BaseAddress = new Uri(Globals.API_IP);
@@ -41,11 +44,13 @@ namespace EnRagedGUI.Helper
 
             var responseJson = await responseMessage.Content.ReadAsStringAsync();
 
+            Console.WriteLine(responseJson);
+
             var ServerObject = System.Text.Json.JsonSerializer.Deserialize<Root>(responseJson);
 
             try
             {
-                if (ServerObject.status == 200)
+                if (ServerObject.code == 200)
                 {
 
                     var certificate = ServerObject.certificate.data;
@@ -56,6 +61,51 @@ namespace EnRagedGUI.Helper
                         certificate.Peer.PublicKey,
                         certificate.Peer.PresharedKey,
                         certificate.Peer.Endpoint);
+                }
+
+                if (ServerObject.code == 702)
+                {
+                    throw new Exception("Account not active, or subscription have expired!");
+                }
+
+                if (ServerObject.code == 429)
+                {
+                    throw new Exception("Too many request, slow down a little!");
+                }
+
+                if (ServerObject.code == 401)
+                {
+
+                    switch (ServerObject.message)
+                    {
+                        case "Token error: invalid signature":
+                            Default.token = "";
+                            Default.Save();
+
+                            MainWindow mainWindow = Application.Current.MainWindow as MainWindow;
+                            mainWindow.Content = new Login();
+                            throw new Exception("Login credentials have expired!");
+                        case "Token error: jwt expired":
+                            await Account.GetNewToken();
+                            break;
+                    }
+
+                    Console.WriteLine(ServerObject.message);
+                    //if (ServerObject.message == "Token error: invalid signature")
+                    //{
+                    //    Default.token = "";
+                    //    Default.Save();
+
+                    //    MainWindow mainWindow = Application.Current.MainWindow as MainWindow;
+                    //    mainWindow.Content = new Login();
+                    //    throw new Exception("Login credentials have expired!");
+                    //}
+
+                    //if (ServerObject.message == "Token error: jwt expired")
+                    //{
+                    //    await Account.GetNewToken();
+                    //    break;
+                    //}
                 }
             }
             catch (Exception ex)

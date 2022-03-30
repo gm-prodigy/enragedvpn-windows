@@ -40,6 +40,7 @@ namespace EnRagedGUI.Pages
         private async void Logout_Button_Click(object sender, RoutedEventArgs e)
         {
             Default.token = "";
+            Default.RefreshToken = "";
             Default.Save();
             if (Default.isConnected)
             {

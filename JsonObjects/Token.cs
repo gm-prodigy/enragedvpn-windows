@@ -6,21 +6,20 @@ using System.Threading.Tasks;
 
 namespace EnRagedGUI.JsonObjects
 {
-    internal class LoginJsonClass
+    public class Token
     {
-        public class User
+        public class Data
         {
-            public string id { get; set; }
             public string token { get; set; }
             public string refreshToken { get; set; }
-            public bool active { get; set; }
-            public long tokenExipry { get; set; }
+            public long tokenExpiry { get; set; }
         }
+
         public class Root
         {
             public bool error { get; set; }
             public int code { get; set; }
-            public User user { get; set; }
+            public Data data { get; set; }
         }
     }
 }

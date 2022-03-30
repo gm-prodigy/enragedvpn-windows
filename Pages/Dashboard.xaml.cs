@@ -61,11 +61,14 @@ namespace EnRagedGUI
             });
         }
 
-
-
         public void Connection_Button_Click(object sender, RoutedEventArgs e)
         {
-            StartConnection();
+            if (dropDownLocations.SelectedValue?.ToString() == null)
+            {
+                MessageBox.Show("No Location Selected");
+                return;
+            }
+            StartConnection(dropDownLocations.SelectedValue.ToString());
         }
 
         public void LoadEvents()
@@ -83,13 +86,12 @@ namespace EnRagedGUI
 
 
 
-        public async void StartConnection()
+        public async void StartConnection(string locationId)
         {
 
 
             if (Default.isConnected)
             {
-                ConnectionButton.IsEnabled = false;
                 await Task.Run(() =>
                 {
                     Tunnel.Service.Remove(ConfigFile, true);
@@ -97,18 +99,21 @@ namespace EnRagedGUI
                 });
                 //updateTransferTitle(0, 0);
                 //connectButton.Text = "Connect";
-                ConnectionButton.IsEnabled = true;
                 Default.isConnected = false;
+                Default.Save();
                 var converter = new BrushConverter();
                 ConnectionButtonIcon.Foreground = (Brush)converter.ConvertFromString("White");
+                GetPublicIPAddress();
                 return;
             }
 
-            ConnectionButton.IsEnabled = false;
             try
             {
-                ConnectionButton.IsEnabled = false;
-                var config = Wireguard.GenerateNewConfigAsync(dropDownLocations.SelectedValue.ToString());
+                await Account.GetNewToken();
+
+                var config = Wireguard.GenerateNewConfigAsync(locationId);
+
+                Console.WriteLine(config);
 
                 if (string.IsNullOrEmpty(await config.ConfigureAwait(true)))
                 {
@@ -117,10 +122,12 @@ namespace EnRagedGUI
 
                 await File.WriteAllBytesAsync(ConfigFile, Encoding.UTF8.GetBytes(await config.ConfigureAwait(true)));
                 await Task.Run(() => Tunnel.Service.Add(ConfigFile, true));
-                ConnectionButton.IsEnabled = true;
+
                 Default.isConnected = true;
+                Default.Save();
 
                 var converter = new BrushConverter();
+
                 ConnectionButtonIcon.Foreground = (Brush)converter.ConvertFromString("#FF51AB52");
 
                 ConnectionState.Name = dropDownLocations.Text;
@@ -134,7 +141,6 @@ namespace EnRagedGUI
                 try { File.Delete(ConfigFile); } catch { }
                 GetPublicIPAddress();
             }
-            ConnectionButton.IsEnabled = true;
             return;
         }
 
@@ -178,6 +184,7 @@ namespace EnRagedGUI
                             try { File.Delete(ConfigFile); } catch { }
                             ConnectionButtonIcon.Foreground = (Brush)converter.ConvertFromString("White");
                             Default.isConnected = false;
+                            Default.Save();
                             GetPublicIPAddress();
                         });
                     }
@@ -187,7 +194,7 @@ namespace EnRagedGUI
                     {
                         this.Dispatcher.Invoke(() =>
                         {
-                            if (Default.isConnected) { ConnectionButtonIcon.Foreground = (Brush)converter.ConvertFromString("White"); Default.isConnected = false; GetPublicIPAddress(); }
+                            if (Default.isConnected) { ConnectionButtonIcon.Foreground = (Brush)converter.ConvertFromString("White"); Default.isConnected = false; Default.Save(); GetPublicIPAddress(); }
                         });
                     }
 
