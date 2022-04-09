@@ -1,5 +1,6 @@
 ﻿using EnRagedGUI.Helper;
-using EnRagedGUI.Pages;
+using System.Linq;
+using MaterialDesignThemes.Wpf;
 using System;
 using System.ComponentModel;
 using System.IO;
@@ -9,111 +10,122 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using static EnRagedGUI.Globals;
+using static EnRagedGUI.App.Globals;
 using static EnRagedGUI.Helper.Wireguard;
 using static EnRagedGUI.Properties.Settings;
+using System.Collections.Immutable;
+
 
 namespace EnRagedGUI
 {
 
-
     public partial class Dashboard : Page
     {
 
-        public Dashboard(bool openLogs)
+        public Dashboard()
         {
             InitializeComponent();
-            logPrintingThread = new Thread(new ThreadStart(TailLog));
-            transferUpdateThread = new Thread(new ThreadStart(TailTransfer));
             GetPublicIPAddress();
-            LoadEvents();
 
-            if (openLogs)
+            dropDownLocations.ItemsSource = ShowLocations.GetLocations();
+            VersionTextBox.Text = "Version: " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            themeToggle.IsChecked = Default.DarkTheme;
+            killSwitchToggle.IsChecked = Default.KillSwitch;
+
+            log = new Tunnel.Ringlogger(LogFile, "GUI");
+
+            Task.Factory.StartNew(() =>
             {
-                testc();
-            }
+                Thread.Sleep(2500);
+            }).ContinueWith(t =>
+            {
+                //note you can use the message queue from any thread, but just for the demo here we 
+                //need to get the message queue from the snackbar, so need to be on the dispatcher
+                MainSnackbar.MessageQueue.Enqueue("Welcome to EnRagedVPN!");
+            }, TaskScheduler.FromCurrentSynchronizationContext());
+
+
+
+            App.Globals.Snackbar = this.MainSnackbar;
         }
 
         private void Dashboard_Page_Loaded(object sender, RoutedEventArgs e)
         {
             ThreadsRunning = true;
-            logPrintingThread.Start();
-            transferUpdateThread.Start();
+            Task.Run(async () => { await TailTransfer(); });
+            Task.Run(async () => { await TailLog(); });
         }
 
-        void GetPublicIPAddress()
+        public void GetPublicIPAddress()
         {
 
             Task.Factory.StartNew(() =>
             {
-                var ipAddress = Tools.GetExternalIPAddress();
-
                 void bindData()
                 {
-                    if (!string.IsNullOrEmpty(ipAddress))
-                        ExternalIP.Content = "External IP: " + ipAddress;
+                    if (!string.IsNullOrEmpty(Tools.GetExternalIPAddress()))
+                    {
+                        ExternalIP.Content = "External IP: " + Tools.GetExternalIPAddress();
+                        ExternalIP.Visibility = Visibility.Visible;
+                    }
                     else
+                    {
                         ExternalIP.Content = "External IP: ";
-
-                    ExternalIP.Visibility = Visibility.Visible;
+                    }
                 }
                 this.Dispatcher.InvokeAsync(bindData);
             });
         }
 
-        public void Connection_Button_Click(object sender, RoutedEventArgs e)
+        public async void Connection_Button_Click(object sender, RoutedEventArgs e)
         {
             if (dropDownLocations.SelectedValue?.ToString() == null)
             {
                 MessageBox.Show("No Location Selected");
                 return;
             }
-            StartConnection(dropDownLocations.SelectedValue.ToString());
+            var converter = new BrushConverter();
+            ButtonProgressAssist.SetIndicatorForeground(ConnectionButton, (Brush)converter.ConvertFromString("orange"));
+            ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, true);
+            await StartConnection(dropDownLocations.SelectedValue.ToString());
+            return;
         }
 
-        public void LoadEvents()
+        public async Task StartConnection(string locationId)
         {
-            if (Default.isConnected)
-            {
-                var converter = new BrushConverter();
-                ConnectionButtonIcon.Foreground = (Brush)converter.ConvertFromString("#FF51AB52");
-            }
-            dropDownLocations.ItemsSource = ShowLocations.GetLocations();
-            dropDownLocations.DisplayMemberPath = "Name";
-            dropDownLocations.SelectedValuePath = "Id";
-            dropDownLocations.SelectedIndex = dropDownLocations.Items.Count - 1;
-        }
-
-
-
-        public async void StartConnection(string locationId)
-        {
-
 
             if (Default.isConnected)
             {
-                await Task.Run(() =>
+                if (dropDownLocations.SelectedValue.ToString() != ConnectionState.Id)
                 {
-                    Tunnel.Service.Remove(ConfigFile, true);
-                    try { File.Delete(ConfigFile); } catch { }
-                });
-                //updateTransferTitle(0, 0);
-                //connectButton.Text = "Connect";
+                    var result = MessageBox.Show("Are you sure you want to disconnect from " + ConnectionState.Name + " and connect to " + dropDownLocations.Text + "?", "Confirm", MessageBoxButton.YesNo);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        await RemoveService();
+                        Default.isConnected = false;
+                        Default.Save();
+                        GetPublicIPAddress();
+                        await StartConnection(dropDownLocations.SelectedValue.ToString());
+                    }
+                    return;
+                }
+
+                await RemoveService();
                 Default.isConnected = false;
                 Default.Save();
+                ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, false);
                 var converter = new BrushConverter();
-                ConnectionButtonIcon.Foreground = (Brush)converter.ConvertFromString("White");
+                ConnectionButton.ClearValue(Button.BackgroundProperty);
                 GetPublicIPAddress();
                 return;
             }
 
             try
             {
+
                 await Account.GetNewToken();
 
-                var config = Wireguard.GenerateNewConfigAsync(locationId);
-
-                Console.WriteLine(config);
+                var config = GenerateNewConfigAsync(locationId);
 
                 if (string.IsNullOrEmpty(await config.ConfigureAwait(true)))
                 {
@@ -126,107 +138,83 @@ namespace EnRagedGUI
                 Default.isConnected = true;
                 Default.Save();
 
-                var converter = new BrushConverter();
-
-                ConnectionButtonIcon.Foreground = (Brush)converter.ConvertFromString("#FF51AB52");
-
                 ConnectionState.Name = dropDownLocations.Text;
                 ConnectionState.Id = dropDownLocations.SelectedValue.ToString();
 
             }
             catch (Exception ex)
             {
+                var converter = new BrushConverter();
+                ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, false);
                 log.Write(ex.Message);
                 MessageBox.Show(ex.Message);
-                try { File.Delete(ConfigFile); } catch { }
+                await RemoveService();
                 GetPublicIPAddress();
             }
             return;
         }
 
-
-
-
-
-        private async void Window_Exit(object sender, CancelEventArgs e)
+        private async Task TailLog()
         {
-            if (Default.isConnected)
-            {
-                ConnectionButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                await Task.Run(() =>
-                {
-                    Tunnel.Service.Remove(ConfigFile, true);
-                    try { File.Delete(ConfigFile); } catch { }
-                });
-            }
+            var converter = new BrushConverter();
+            var cursor = Tunnel.Ringlogger.CursorAll;
 
-            return;
-        }
-
-        private void TailLog()
-        {
-            var converter = new BrushConverter(); var cursor = Tunnel.Ringlogger.CursorAll;
             while (ThreadsRunning)
             {
                 var lines = log.FollowFromCursor(ref cursor);
-                foreach (var line in lines)
-                    Dispatcher.Invoke(new Action<string>(ConsoleLogs.AppendText), new object[] { line + "\r\n" });
 
-                foreach (var line in lines)
-                    if (line.Contains("Startup complete")) { GetPublicIPAddress(); }
-
-                foreach (var line in lines)
-                    if (line.Contains("retrying (try 3)"))
+                lines.Where(x => x.Contains("Startup complete")).ToImmutableList().ForEach(x =>
+                {
+                    Dispatcher.Invoke(() =>
                     {
-                        this.Dispatcher.Invoke(() =>
+                        GetPublicIPAddress();
+                        ConnectionButton.Background = (Brush)converter.ConvertFromString("#FF51AB52");
+                        ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, true);
+                        ButtonProgressAssist.SetIndicatorForeground(ConnectionButton, (Brush)converter.ConvertFromString("green"));
+                        MainSnackbar.MessageQueue.Enqueue("Connected To " + ConnectionState.Name);
+                    });
+                });
+
+                lines.Where(x => x.Contains("retrying (try 3)")).ToImmutableList().ForEach(x =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (Default.isConnected)
                         {
-                            Tunnel.Service.Remove(ConfigFile, true);
-                            try { File.Delete(ConfigFile); } catch { }
-                            ConnectionButtonIcon.Foreground = (Brush)converter.ConvertFromString("White");
                             Default.isConnected = false;
                             Default.Save();
                             GetPublicIPAddress();
-                        });
-                    }
+                            MainSnackbar.MessageQueue.Enqueue("Disconnected From " + ConnectionState.Name + "!");
+                        }
+                        ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, false);
+                        var converter = new BrushConverter();
+                        ConnectionButton.ClearValue(Button.BackgroundProperty);
+                    });
+                });
 
-                foreach (var line in lines)
-                    if (line.Contains("Shutting down"))
+                lines.Where(x => x.Contains("Shutting down")).ToImmutableList().ForEach(x =>
+                {
+                    Dispatcher.Invoke(() =>
                     {
-                        this.Dispatcher.Invoke(() =>
+                        if (Default.isConnected)
                         {
-                            if (Default.isConnected) { ConnectionButtonIcon.Foreground = (Brush)converter.ConvertFromString("White"); Default.isConnected = false; Default.Save(); GetPublicIPAddress(); }
-                        });
-                    }
+                            Default.isConnected = false;
+                            Default.Save();
+                            GetPublicIPAddress();
+                        }
+                        MainSnackbar.MessageQueue.Enqueue("Disconnected From " + ConnectionState.Name + "!");
+                        ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, false);
+                        var converter = new BrushConverter();
+                        ConnectionButton.ClearValue(Button.BackgroundProperty);
+                    });
+                });
 
-                try { Thread.Sleep(300); } catch { break; }
+                //Suspending the thread seems to bring cpu usage 
+                try { Thread.Sleep(300); } catch { }
             }
         }
 
-        private void MenuItem_Logs(object sender, RoutedEventArgs e)
-        {
-            if (ConsoleLogsGrids.Visibility == Visibility.Hidden)
-            {
-                ConsoleLogsGrids.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                ConsoleLogsGrids.Visibility = Visibility.Hidden;
-            }
-        }
-
-        public void testc()
-        {
-            if (ConsoleLogsGrids.Visibility == Visibility.Hidden)
-            {
-                ConsoleLogsGrids.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                ConsoleLogsGrids.Visibility = Visibility.Hidden;
-            }
-        }
-
-        public void TailTransfer()
+        public async Task TailTransfer()
         {
             Tunnel.Driver.Adapter adapter = null;
             while (ThreadsRunning)
@@ -264,7 +252,7 @@ namespace EnRagedGUI
                         tx += peer.TxBytes;
                     }
 
-                    Task.Factory.StartNew(() =>
+                    await Task.Factory.StartNew(() =>
                     {
                         var usage = Tools.FormatBytes(tx + rx);
 
@@ -274,11 +262,6 @@ namespace EnRagedGUI
                             {
                                 Usage.Visibility = Visibility.Visible;
                                 Usage.Content = "Usage: " + usage;
-                            }
-                            else
-                            {
-                                Usage.Visibility = Visibility.Hidden;
-                                Usage.Content = "Usage: ";
                             }
                         }
                         this.Dispatcher.InvokeAsync(bindData);
@@ -290,18 +273,87 @@ namespace EnRagedGUI
             }
         }
 
-        private void MenuButton_Click(object sender, RoutedEventArgs e)
+
+        //Theme Code ========================>
+        public bool IsDarkTheme { get; set; }
+        private readonly PaletteHelper paletteHelper = new PaletteHelper();
+
+        private void ToggleTheme(object sender, RoutedEventArgs e)
         {
-            if (sender is FrameworkElement addButton)
+
+            //get the current theme used in the application
+            ITheme theme = paletteHelper.GetTheme();
+
+            //if condition true, then set IsDarkTheme to false and, SetBaseTheme to light
+            if (Default.DarkTheme = theme.GetBaseTheme() == BaseTheme.Dark)
             {
-                addButton.ContextMenu.IsOpen = true;
+                theme.SetBaseTheme(Theme.Light);
+                Default.DarkTheme = false;
+            }
+
+            //else set IsDarkTheme to true and SetBaseTheme to dark
+            else
+            {
+                theme.SetBaseTheme(Theme.Dark);
+                Default.DarkTheme = true;
+            }
+
+            Default.Save();
+            paletteHelper.SetTheme(theme);
+        }
+
+        private async void Btn_Logout_Click(object sender, RoutedEventArgs e)
+        {
+            Default.token = "";
+            Default.RefreshToken = "";
+            Default.Save();
+            if (Default.isConnected)
+            {
+                await Task.Run(() =>
+                {
+                    Tunnel.Service.Remove(ConfigFile, true);
+                    try { File.Delete(ConfigFile); } catch { }
+                });
+                Default.isConnected = false;
+            }
+
+            MainWindow mainWindow = Application.Current.MainWindow as MainWindow;
+            mainWindow.MainWindowFrame.Content = new Login();
+        }
+
+        private async void KillSwitchToggle_Click(object sender, RoutedEventArgs e)
+        {
+
+            if ((bool)killSwitchToggle.IsChecked)
+            {
+                Default.KillSwitch = true;
+                Default.Save();
+            }
+            else
+            {
+                Default.KillSwitch = false;
+                Default.Save();
+            }
+
+            if (Default.isConnected)
+            {
+                await Task.Run(() =>
+                {
+                    this.Dispatcher.Invoke(async () =>
+                    {
+                        await RemoveService();
+                        Default.isConnected = false;
+                        Default.Save();
+
+                        await new Dashboard().StartConnection(ConnectionState.Id);
+                    });
+                });
+
             }
         }
 
-        private void Settingsaa(object sender, RoutedEventArgs e)
-        {
-            MainWindow mainWindow = Application.Current.MainWindow as MainWindow;
-            mainWindow.Content = new Settings();
-        }
+
+
+
     }
 }

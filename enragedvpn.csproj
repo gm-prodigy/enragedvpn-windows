@@ -4,10 +4,10 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>EnRagedGUI</RootNamespace>
     <UseWindowsForms>False</UseWindowsForms>
-    <AssemblyName>EnRagedVPN</AssemblyName>
+    <AssemblyName>enragedvpn</AssemblyName>
     <Platforms>x64;AnyCPU;x86</Platforms>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <StartupObject>EnRagedGUI.App</StartupObject>
+    <StartupObject>EnRagedGUI.Program</StartupObject>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <Nullable>disable</Nullable>
     <NeutralLanguage>en</NeutralLanguage>
@@ -19,7 +19,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <SignAssembly>False</SignAssembly>
     <Description>A graphical user interface for connecting to EnRagedVPN's services.</Description>
-    <FileVersion>1.0.0.2</FileVersion>
+    <FileVersion></FileVersion>
     <AssemblyVersion></AssemblyVersion>
     <Company>EnRaged Services</Company>
     <Version>1.0.1</Version>
@@ -70,11 +70,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Clowd.Squirrel" Version="2.8.40" />
     <PackageReference Include="FluentScheduler" Version="5.5.1" />
-    <PackageReference Include="MahApps.Metro.IconPacks" Version="4.11.0" />
     <PackageReference Include="MaterialDesignThemes" Version="4.4.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="squirrel.windows" Version="1.9.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -110,9 +109,6 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <None Update="tunnel.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Update.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="wireguard.dll">

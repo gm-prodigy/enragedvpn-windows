@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using static EnRagedGUI.JsonObjects.MainApiJsonClass;
 using static EnRagedGUI.Properties.Settings;
+using static EnRagedGUI.App.Globals;
 
 namespace EnRagedGUI.Helper
 {
@@ -33,7 +35,7 @@ namespace EnRagedGUI.Helper
             Default.LastLocationId = selectedLocation;
 
             using var client = new HttpClient();
-            client.BaseAddress = new Uri(Globals.API_IP);
+            client.BaseAddress = new Uri(API_IP);
             client.Timeout = TimeSpan.FromSeconds(10);
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -83,7 +85,7 @@ namespace EnRagedGUI.Helper
                             Default.Save();
 
                             MainWindow mainWindow = Application.Current.MainWindow as MainWindow;
-                            mainWindow.Content = new Login();
+                            mainWindow.MainWindowFrame.Content = new Login();
                             throw new Exception("Login credentials have expired!");
                         case "Token error: jwt expired":
                             await Account.GetNewToken();
@@ -134,8 +136,16 @@ DNS = {dns}
 PublicKey = {publicKey}
 PresharedKey = {presharedKey}
 EndPoint = {endPoint}
-AllowedIPs = {(!Properties.Settings.Default.KillSwitch ? "0.0.0.0/1, 128.0.0.0/1, ::/1, 8000::/1" : "0.0.0.0/0, ::/0")}";
+AllowedIPs = {(!Default.KillSwitch ? "0.0.0.0/1, 128.0.0.0/1, ::/1, 8000::/1" : "0.0.0.0/0, ::/0")}";
 
 
+        public static async Task RemoveService()
+        {
+            await Task.Run(() =>
+            {
+                Tunnel.Service.Remove(ConfigFile, true);
+                try { File.Delete(ConfigFile); } catch { }
+            });
+        }
     }
 }

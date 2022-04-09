@@ -116,7 +116,7 @@ namespace Tunnel
                 get => _view.ReadUInt32(offsetNextIndex);
                 set => _view.Write(offsetNextIndex, value);
             }
-            public unsafe uint InsertNextIndex()
+            public unsafe UInt32 InsertNextIndex()
             {
                 byte* pointer = null;
                 _view.SafeMemoryMappedViewHandle.AcquirePointer(ref pointer);

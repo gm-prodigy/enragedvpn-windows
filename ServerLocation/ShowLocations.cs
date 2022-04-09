@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
+using static EnRagedGUI.App.Globals;
 
 namespace EnRagedGUI;
 
@@ -12,12 +13,12 @@ class ShowLocations
 
     static ShowLocations()
     {
-        
+
         using var webClient = new HttpClient();
         string rawJSON = null;
         try
         {
-            rawJSON = webClient.GetStringAsync($"{Globals.API_IP}server/nodes").GetAwaiter().GetResult();
+            rawJSON = webClient.GetStringAsync($"{API_IP}server/nodes").GetAwaiter().GetResult();
 
         }
         catch (Exception)

@@ -9,21 +9,27 @@
         Width="450"
         WindowStartupLocation="CenterScreen"
         Background="{x:Null}"
-    AllowsTransparency="True"
         TextElement.FontWeight="Medium"
         TextElement.FontSize="14"
         Closing="Window_Closing"
-        ResizeMode="NoResize"
+        ResizeMode="CanMinimize"
              TextOptions.TextFormattingMode="Ideal"
      TextOptions.TextRenderingMode="Auto"
      
      FontFamily="{DynamicResource MaterialDesignFont}"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-     TextElement.Foreground="{DynamicResource MaterialDesignBody}" WindowStyle="None"
+     TextElement.Foreground="{DynamicResource MaterialDesignBody}" WindowStyle="ThreeDBorderWindow"
         MouseLeftButtonDown="OnMouseLeftButtonDown">
 
 
-    <Grid>
-        <Frame x:Name="MainWindowFrame" NavigationUIVisibility="Hidden"></Frame>
-    </Grid>
+    <materialDesign:Card Background="{DynamicResource MaterialDesignPaper}"  materialDesign:ShadowAssist.ShadowDepth="Depth4">
+
+
+        <StackPanel>
+
+            <Frame x:Name="MainWindowFrame" NavigationUIVisibility="Hidden"></Frame>
+
+        </StackPanel>
+
+    </materialDesign:Card>
 </Window>

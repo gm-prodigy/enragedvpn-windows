@@ -1,44 +1,100 @@
-﻿using EnRagedGUI.Properties;
+﻿using EnRagedGUI.Helper;
+using EnRagedGUI.Properties;
 using FluentScheduler;
+using MaterialDesignThemes.Wpf;
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using static EnRagedGUI.Globals;
+using System.Windows.Media;
+using static EnRagedGUI.App.Globals;
+using static EnRagedGUI.Helper.Wireguard;
+using static EnRagedGUI.Properties.Settings;
 
 namespace EnRagedGUI
 {
 
     public partial class MainWindow : Window
     {
-
+        private readonly PaletteHelper paletteHelper = new PaletteHelper();
+        public static Snackbar Snackbar;
         public MainWindow()
         {
-            MakeConfigDirectory();
             InitializeComponent();
-            _ = StartUpEventsAsync();
+
             try { File.Delete(LogFile); } catch { }
-            log = new Tunnel.Ringlogger(LogFile, "GUI");
+            //log = new Tunnel.Ringlogger(LogFile, "GUI");
 
             JobManager.Initialize();
+            SetStartUpTheme();
+
+            _ = StartUpEventsAsync();
+
         }
 
         private async Task StartUpEventsAsync()
         {
-            CheckForUpdate();
+            await CheckForUpdate();
+
+
+            Default.isConnected = false;
+            Default.LastLocationId = "";
+            Default.Save();
+
+            if (SingleInstance.AlreadyRunning())
+            {
+                MessageBox.Show("EnRagedGUI is already running");
+                Environment.Exit(0);
+                return;
+            }
+
             try
             {
-                JobManager.AddJob(() => log.Write("1 minutes just passed."), s => s.ToRunEvery(1).Minutes());
-                JobManager.AddJob(() => CheckForUpdate(), s => s.ToRunEvery(100).Minutes());
+                JobManager.AddJob(async () => await CheckForUpdate(), s => s.ToRunEvery(12).Hours());
             }
             catch { }
 
-
-
-            if (Settings.Default.token != "")
+            if (Default.token != "")
             {
-                MainWindowFrame.Content = new Dashboard(false);
+                MainWindowFrame.Content = new Dashboard();
+
+                //await Task.Delay(1000);
+                //if (Default.FirstRun)
+                //{
+                //    Default.FirstRun = false;
+                //    Default.Save();
+                //    await Task.Delay(1000);
+                //    await Task.Run(() =>
+                //    {
+                //        try
+                //        {
+                //            var dialog = new FirstRunDialog();
+                //            dialog.ShowDialog();
+                //        }
+                //        catch (Exception ex)
+                //        {
+                //            log.Error(ex.Message);
+                //        }
+                //    });
+                //}
+                //else
+                //{
+                //    await Task.Delay(1000);
+                //    await Task.Run(() =>
+                //    {
+                //        try
+                //        {
+                //            var dialog = new FirstRunDialog();
+                //            dialog.ShowDialog();
+                //        }
+                //        catch (Exception ex)
+                //        {
+                //            log.Error(ex.Message);
+                //        }
+                //    });
+                //}
             }
             else
             {
@@ -47,25 +103,31 @@ namespace EnRagedGUI
 
         }
 
-        private static void MakeConfigDirectory()
+        public void SetStartUpTheme()
         {
-            try
+
+            //get the current theme used in the application
+            ITheme theme = paletteHelper.GetTheme();
+
+            if (Default.DarkTheme == true)
             {
-                //var ds = new DirectorySecurity();
-                //ds.SetSecurityDescriptorSddlForm("O:BAG:BAD:PAI(A;OICI;FA;;;BA)(A;OICI;FA;;;SY)");
-                //FileSystemAclExtensions.CreateDirectory(ds, UserDirectory);
-                Directory.CreateDirectory(UserDirectory);
+                theme.SetBaseTheme(Theme.Dark);
             }
-            catch
+            else
             {
-                MessageBox.Show("EnRagedVPN requires administrator privileges", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                theme.SetBaseTheme(Theme.Light);
+
             }
 
+            //to apply the changes use the SetTheme function
+            paletteHelper.SetTheme(theme);
         }
+
+
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            Settings.Default.Save();
+            Default.Save();
             Environment.Exit(0);
         }
 
@@ -76,6 +138,31 @@ namespace EnRagedGUI
 
                 this.DragMove();
             }
+        }
+
+        private void ExitApp(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+
+        private async void Btn_Logout_Click(object sender, RoutedEventArgs e)
+        {
+            Default.token = "";
+            Default.RefreshToken = "";
+            Default.Save();
+            if (Default.isConnected)
+            {
+                await Task.Run(() =>
+                {
+                    Tunnel.Service.Remove(ConfigFile, true);
+                    try { File.Delete(ConfigFile); } catch { }
+                });
+                Default.isConnected = false;
+            }
+
+
+            MainWindowFrame.Content = new Login();
+            //Console.WriteLine(Application.Current);
         }
     }
 }

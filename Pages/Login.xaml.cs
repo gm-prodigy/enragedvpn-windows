@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using static EnRagedGUI.JsonObjects.LoginJsonClass;
+using static EnRagedGUI.App.Globals;
 
 namespace EnRagedGUI
 {
@@ -47,10 +48,6 @@ namespace EnRagedGUI
 
         private async Task GetTokenAsync()
         {
-            //var email = EmailTextBox.Text.Trim();
-            //var password = PasswordTextBox.Password.Trim();
-            //var email = "";
-            //var password = "";
             var email = txtUsername.Text.Trim();
             var password = txtPassword.Password.Trim();
 
@@ -60,7 +57,7 @@ namespace EnRagedGUI
                 throw new Exception("Email not valid!");
             }
             using var client = new HttpClient();
-            client.BaseAddress = new Uri(Globals.API_IP);
+            client.BaseAddress = new Uri(API_IP);
             client.Timeout = TimeSpan.FromSeconds(5);
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -87,8 +84,9 @@ namespace EnRagedGUI
                 Properties.Settings.Default.Email = email;
                 Properties.Settings.Default.Save();
 
-                MainWindow mainWindow = Application.Current.MainWindow as MainWindow;
-                mainWindow.Content = new Dashboard(false);
+                MainWindow mainWindow = (MainWindow)Application.Current.MainWindow;
+                mainWindow.MainWindowFrame.Content = new Dashboard();
+
             }
             else if (userObject.code == 401)
             {

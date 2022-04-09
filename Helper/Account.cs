@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using static EnRagedGUI.JsonObjects.Token;
 using static EnRagedGUI.Properties.Settings;
+using static EnRagedGUI.App.Globals;
 
 namespace EnRagedGUI.Helper
 {
@@ -18,7 +19,7 @@ namespace EnRagedGUI.Helper
         {
 
             using var client = new HttpClient();
-            client.BaseAddress = new Uri(Globals.API_IP);
+            client.BaseAddress = new Uri(API_IP);
             client.Timeout = TimeSpan.FromSeconds(10);
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -50,13 +51,13 @@ namespace EnRagedGUI.Helper
                     {
                         await Task.Run(() =>
                         {
-                            Tunnel.Service.Remove(Globals.ConfigFile, true);
-                            try { File.Delete(Globals.ConfigFile); } catch { }
+                            Tunnel.Service.Remove(ConfigFile, true);
+                            try { File.Delete(ConfigFile); } catch { }
                         });
                         Default.isConnected = false;
                     }
                     MainWindow mainWindow = Application.Current.MainWindow as MainWindow;
-                    mainWindow.Content = new Login();
+                    mainWindow.MainWindowFrame.Content = new Login();
                     throw new Exception("Login credentials have expired!");
                 }
             }

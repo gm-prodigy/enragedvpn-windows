@@ -1,175 +1,107 @@
 ﻿<Page x:Class="EnRagedGUI.Dashboard"
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:EnRagedGUI"
-      xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks" 
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
       mc:Ignorable="d" 
-      d:DesignHeight="500" d:DesignWidth="375"
+      d:DesignHeight="760" d:DesignWidth="450"
       Loaded="Dashboard_Page_Loaded"
       Title="Dashboard">
 
-    <Page.Resources>
+    <materialDesign:DrawerHost HorizontalAlignment="Center" VerticalAlignment="Center">
+        <materialDesign:DrawerHost.RightDrawerContent>
+            <StackPanel Height="760" Width="450">
 
-        <Style TargetType="Button">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type Button}">
-                        <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-    </Page.Resources>
-    <Grid>
-
-        <Grid.Background>
-            <LinearGradientBrush StartPoint="1 0" EndPoint="0 0">
-                <LinearGradientBrush.GradientStops>
-                    <GradientStop Offset="1" Color="#181818" />
-                    <GradientStop Offset="0" Color="#323232" />
-                </LinearGradientBrush.GradientStops>
-            </LinearGradientBrush>
-        </Grid.Background>
-        <StackPanel>
-            <StackPanel Height="56" Width="376">
                 <DockPanel>
-
-                    <Label Foreground="White" Height="50"  Width="50" HorizontalAlignment="Left" BorderBrush="Transparent">
-                        <Label.Effect>
-                            <DropShadowEffect/>
-                        </Label.Effect>
-                        <Label.Background>
-                            <LinearGradientBrush StartPoint="1 0" EndPoint="0 1">
-                                <LinearGradientBrush.GradientStops>
-                                    <GradientStop Offset="0" Color="#323232" />
-                                    <GradientStop Offset="1" Color="#181818" />
-                                </LinearGradientBrush.GradientStops>
-                            </LinearGradientBrush>
-                        </Label.Background>
-                        <Grid>
-
-                            <iconPacks:PackIconMaterial Kind="Menu" Height="25" Width="24" Margin="10" Foreground="White" >
-                                <iconPacks:PackIconMaterial.Effect>
-                                    <DropShadowEffect/>
-                                </iconPacks:PackIconMaterial.Effect>
-                            </iconPacks:PackIconMaterial>
-                            <Button Click="Settingsaa"></Button>
-                        </Grid>
-
-                    </Label>
-                    <DockPanel Height="50" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5 0 0 0">
-                        <DockPanel.Effect>
-                            <DropShadowEffect/>
-                        </DockPanel.Effect>
-                        <DockPanel.Background>
-                            <LinearGradientBrush StartPoint="1 0" EndPoint="0 1">
-                                <LinearGradientBrush.GradientStops>
-                                    <GradientStop Offset="1" Color="#181818" />
-                                    <GradientStop Offset="0" Color="#323232" />
-                                </LinearGradientBrush.GradientStops>
-                            </LinearGradientBrush>
-                        </DockPanel.Background>
-                        <DockPanel Width="266">
-                            <Label Foreground="White" FontSize="24" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                <Label.Effect>
-                                    <DropShadowEffect/>
-                                </Label.Effect>
-                                <Label.Content>
-                                    EnRagedVPN
-                                </Label.Content>
-                            </Label>
-                            <Label Name="transferUsage" Foreground="White" FontSize="14" HorizontalAlignment="Right" VerticalAlignment="Center">
-
-                            </Label>
-                        </DockPanel>
-                    </DockPanel>
+                    <Button Command="{x:Static materialDesign:DrawerHost.CloseDrawerCommand}"
+                        CommandParameter="{x:Static Dock.Right}"
+                        Margin="4" HorizontalAlignment="Left"
+                        Style="{DynamicResource MaterialDesignFlatButton}"
+                        Foreground="{DynamicResource MaterialDesignBody}" VerticalAlignment="Center">
+                        <materialDesign:PackIcon Kind="ArrowBack" Foreground="{DynamicResource MaterialDesignBody}" Width="30" Height="30" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Button>
+                    <TextBlock Foreground="{DynamicResource MaterialDesignBody}" FontSize="24" FontWeight="Bold" Margin="0,10,60,0" Height="55" Width="80">Settings</TextBlock>
                 </DockPanel>
+
+                <StackPanel Margin="16 10 0 6" Orientation="Horizontal" HorizontalAlignment="Left" >
+                    <TextBlock  VerticalAlignment="Center" Text="Dark Mode"  Foreground="{DynamicResource MaterialDesignBody}" FontSize="16"/>
+                    <ToggleButton Cursor="Hand" ToolTip="Enable Dark Mode" Margin="12 0 8 0" x:Name="themeToggle" IsChecked="false" Click="ToggleTheme"/>
+                </StackPanel>
+
+                <StackPanel Margin="16 10 0 6" Orientation="Horizontal" HorizontalAlignment="Left">
+                    <TextBlock  VerticalAlignment="Center" Text="Kill Switch"  Foreground="{DynamicResource MaterialDesignBody}" FontSize="16"/>
+                    <ToggleButton Cursor="Hand" ToolTip="Kill switch" Margin="12 0 8 0" x:Name="killSwitchToggle" Click="KillSwitchToggle_Click"/>
+                </StackPanel>
+
+                <StackPanel Margin="16 10 0 6" Orientation="Horizontal" HorizontalAlignment="Left">
+                    <TextBlock  VerticalAlignment="Center" Text="Logout"  Foreground="{DynamicResource MaterialDesignBody}" FontSize="16"/>
+                    <ToggleButton Cursor="Hand" ToolTip="Enable Dark Mode" Margin="12 0 8 0" x:Name="Btn_Logout" IsChecked="false" Click="Btn_Logout_Click"/>
+                </StackPanel>
+
+                <TextBlock x:Name="VersionTextBox" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,45,0,0"
+                   FontSize="16" Foreground="{DynamicResource MaterialDesignBody}"/>
             </StackPanel>
 
-            <Grid Height="407" Width="369" Visibility="Visible">
-                <iconPacks:PackIconMaterial x:Name="ConnectionButtonIcon" Kind="Power" Foreground="White" Width="142" Height="175" Margin="0,20,0,0" HorizontalAlignment="Center" >
-                    <iconPacks:PackIconMaterial.Effect>
-                        <DropShadowEffect/>
-                    </iconPacks:PackIconMaterial.Effect>
-                </iconPacks:PackIconMaterial>
-                <Button Name="ConnectionButton" Click="Connection_Button_Click" IsEnabled="True" Width="135" HorizontalAlignment="Center" Margin="0,34,0,227"/>
+        </materialDesign:DrawerHost.RightDrawerContent>
 
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Height="760" Width="450">
 
+            <Button Command="{x:Static materialDesign:DrawerHost.OpenDrawerCommand}"
+                        CommandParameter="{x:Static Dock.Right}"
+                        Grid.Row="1" Grid.Column="2" Margin="4,4,15,4" Width="48" HorizontalAlignment="Right" Background="{x:Null}" BorderBrush="{x:Null}">
+                <materialDesign:PackIcon Kind="Menu" Foreground="{DynamicResource MaterialDesignBody}" Width="30" Height="30" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </Button>
 
+            <materialDesign:Snackbar MessageQueue="{materialDesign:MessageQueue}" x:Name="MainSnackbar"
+                                            Grid.Row="1" />
+            <Label x:Name="Logo"  FontSize="36" HorizontalAlignment="Center" Height="65" FontStyle="Normal" FontWeight="Bold" Margin="0,0,0,5" FontFamily="Myanmar Text">EnragedVPN</Label>
 
-                <Label x:Name="ExternalIP"  Foreground="White" FontSize="14" HorizontalAlignment="Center" Margin="0,250,0,0" VerticalAlignment="Top" Height="34" FontStyle="Normal" FontWeight="Normal" BorderBrush="Black">
-                    <Label.Effect>
-                        <DropShadowEffect/>
-                    </Label.Effect>
-                    <Label.Content>
-                        External IP: 127.0.0.1
-                    </Label.Content>
-                </Label>
-                <Label x:Name="Usage"  Foreground="White" FontSize="14" HorizontalAlignment="Center" Margin="0,276,0,0" VerticalAlignment="Top" Height="34" FontStyle="Normal" FontWeight="Normal" BorderBrush="Black" Visibility="Hidden">
-                    <Label.Effect>
-                        <DropShadowEffect/>
-                    </Label.Effect>
-                    <Label.Content>
-                        Usage: 127.0.0.1
-                    </Label.Content>
-                </Label>
+            <Button x:Name="ConnectionButton"
+                    Style="{StaticResource MaterialDesignFloatingActionButton}"
+                    materialDesign:ButtonProgressAssist.IsIndicatorVisible="True"
+                    materialDesign:ButtonProgressAssist.Value="-1" 
+                    materialDesign:ButtonProgressAssist.IsIndeterminate="false" Height="150" Width="150" Margin="0,56,0,41"
+                    Click="Connection_Button_Click"
+                    >
+                <materialDesign:PackIcon Height="150" Width="150" Kind="Power" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
+            </Button>
+            <Label x:Name="ExternalIP"  FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Top" Height="34" FontStyle="Normal" FontWeight="Normal">
 
+                <Label.Content>
+                    External IP: 127.0.0.1
+                </Label.Content>
+            </Label>
+            <Label x:Name="Usage"  FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Top" Height="34" FontStyle="Normal" FontWeight="Normal" Visibility="Hidden">
 
-                <Grid Height="92" Margin="0,315,-6,0">
-                    <Grid.Background>
-                        <LinearGradientBrush StartPoint="1 0" EndPoint="0 1">
-                            <GradientStop Offset="0" Color="#323232" />
-                            <GradientStop Offset="1" Color="#181818" />
-                        </LinearGradientBrush>
-                    </Grid.Background>
-                    <ComboBox x:Name="dropDownLocations" BorderBrush="Transparent" VerticalContentAlignment="Center" Background="Transparent" Margin="27,29,41,28" IsSynchronizedWithCurrentItem="True" SelectedIndex="1" FontFamily="Segoe UI" FontSize="16" AutomationProperties.HelpText="Select A Location" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                </Grid>
-            </Grid>
+                <Label.Content>
+                    Usage: 127.0.0.1
+                </Label.Content>
+            </Label>
 
-            <Grid Name="ConsoleLogsGrids"  Height="402" Width="355" Visibility="Hidden" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <ComboBox
+                DisplayMemberPath="Name"
+                SelectedValuePath="Id"
+                Width="300"
+                x:Name="dropDownLocations"
+                VerticalContentAlignment="Center"
+                IsSynchronizedWithCurrentItem="True"
+                SelectedIndex="1"
+                FontFamily="Segoe UI"
+                FontSize="16"
+                AutomationProperties.HelpText="Select A Location"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch" Foreground="{DynamicResource MaterialDesignBody}">
 
-                <Grid.RenderTransform>
-                    <TransformGroup>
-                        <ScaleTransform ScaleY="-1"/>
-                        <SkewTransform/>
-                        <RotateTransform/>
-                        <TranslateTransform/>
-                    </TransformGroup>
-                </Grid.RenderTransform>
-                <TextBox Name="ConsoleLogs" TextWrapping="Wrap" Margin="0,6,0,4" RenderTransformOrigin="0.5,0.5" Foreground="White" FontSize="14" FontFamily="Segoe UI Semibold">
-                    <TextBox.Background>
-                        <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
-                            <GradientStop Color="#323232"/>
-                            <GradientStop Color="#181818" Offset="1"/>
-                        </LinearGradientBrush>
-                    </TextBox.Background>
-                    <TextBox.Effect>
-                        <DropShadowEffect/>
-                    </TextBox.Effect>
-                    <TextBox.RenderTransform>
-                        <TransformGroup>
-                            <ScaleTransform ScaleY="-1"/>
-                            <SkewTransform/>
-                            <RotateTransform/>
-                            <TranslateTransform/>
-                        </TransformGroup>
-                    </TextBox.RenderTransform>
-                </TextBox>
-                <Button Click="MenuItem_Logs"  Margin="326,369,0,4" Foreground="White" FontSize="18">
-                    X
-                </Button>
-            </Grid>
+            </ComboBox>
 
         </StackPanel>
-    </Grid>
+
+
+
+    </materialDesign:DrawerHost>
+
+
+
 </Page>
