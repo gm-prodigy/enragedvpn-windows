@@ -21,7 +21,7 @@
                         Foreground="{DynamicResource MaterialDesignBody}" VerticalAlignment="Center">
                         <materialDesign:PackIcon Kind="ArrowBack" Foreground="{DynamicResource MaterialDesignBody}" Width="30" Height="30" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </Button>
-                    <TextBlock Foreground="{DynamicResource MaterialDesignBody}" FontSize="24" FontWeight="Bold" Margin="0,10,60,0" Height="55" Width="80">Settings</TextBlock>
+                    <TextBlock Foreground="{DynamicResource MaterialDesignBody}" FontSize="24" FontWeight="Bold" Margin="0,10,57.6,0" Height="55" Width="80" HorizontalAlignment="Center" VerticalAlignment="Center">Settings</TextBlock>
                 </DockPanel>
 
                 <StackPanel Margin="16 10 0 6" Orientation="Horizontal" HorizontalAlignment="Left" >
@@ -35,8 +35,25 @@
                 </StackPanel>
 
                 <StackPanel Margin="16 10 0 6" Orientation="Horizontal" HorizontalAlignment="Left">
+                    <TextBlock  VerticalAlignment="Center" Text="Update"  Foreground="{DynamicResource MaterialDesignBody}" FontSize="16"/>
+
+                    <Button Style="{StaticResource MaterialDesignFlatButton}"
+                            x:Name="Btn_UpdateButton"
+                            Click="Btn_Update_Click"
+                            ToolTip="Check for update!"
+                            Margin="25 0 8 0"
+                            materialDesign:ButtonProgressAssist.Value="70">
+                        <materialDesign:PackIcon Kind="Update"  Height="24" Width="24" />
+                    </Button>
+
+                </StackPanel>
+
+                <StackPanel Margin="16 10 0 6" Orientation="Horizontal" HorizontalAlignment="Left">
                     <TextBlock  VerticalAlignment="Center" Text="Logout"  Foreground="{DynamicResource MaterialDesignBody}" FontSize="16"/>
-                    <ToggleButton Cursor="Hand" ToolTip="Enable Dark Mode" Margin="12 0 8 0" x:Name="Btn_Logout" IsChecked="false" Click="Btn_Logout_Click"/>
+
+                    <Button Style="{StaticResource MaterialDesignFlatButton}" Click="Btn_Logout_Click" ToolTip="Logs you out" Margin="30 0 8 0">
+                        <materialDesign:PackIcon Kind="Logout" Height="24" Width="24" />
+                    </Button>
                 </StackPanel>
 
                 <TextBlock x:Name="VersionTextBox" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,45,0,0"

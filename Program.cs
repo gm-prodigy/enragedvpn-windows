@@ -1,10 +1,15 @@
-﻿using System;
+﻿using EnRagedGUI.Helper;
+using EnRagedGUI.Properties;
+using Serilog;
+using Squirrel;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace EnRagedGUI
 {
@@ -13,6 +18,16 @@ namespace EnRagedGUI
         [STAThread]
         public static void Main(string[] args)
         {
+
+            // run Squirrel first, as the app may exit after these run
+            SquirrelAwareApp.HandleEvents(
+                onInitialInstall: OnAppInstall,
+                onAppUninstall: OnAppUninstall
+                //onEveryRun: OnAppRun
+                );
+
+
+
             if (args.Length == 3 && args[0] == "/service")
             {
                 var t = new Thread(() =>
@@ -34,10 +49,44 @@ namespace EnRagedGUI
                 return;
             }
 
+            if (SingleInstance.AlreadyRunning())
+            {
+                MessageBox.Show("EnRagedGUI is already running", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Environment.Exit(0);
+                return;
+            }
+
+            
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.Console()
+                .CreateLogger();
+
+            Log.Information("Hello, world!");
+
             var application = new App();
             application.Startup += (e, o) => { };
             application.InitializeComponent();
             application.Run();
+        }
+
+        private static void OnAppInstall(SemanticVersion version, IAppTools tools)
+        {
+            tools.CreateShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
+            Settings.Default.Upgrade();
+            Settings.Default.Save();
+        }
+
+        private static void OnAppUninstall(SemanticVersion version, IAppTools tools)
+        {
+            tools.RemoveShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
+        }
+
+        private static void OnAppRun(SemanticVersion version, IAppTools tools, bool firstRun)
+        {
+            tools.SetProcessAppUserModelId();
+            // show a welcome message when the app is first installed
+            if (firstRun) MessageBox.Show("First time to EnRagedVPN?");
         }
     }
 }

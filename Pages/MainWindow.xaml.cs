@@ -25,7 +25,6 @@ namespace EnRagedGUI
             InitializeComponent();
 
             try { File.Delete(LogFile); } catch { }
-            //log = new Tunnel.Ringlogger(LogFile, "GUI");
 
             JobManager.Initialize();
             SetStartUpTheme();
@@ -36,23 +35,17 @@ namespace EnRagedGUI
 
         private async Task StartUpEventsAsync()
         {
-            await CheckForUpdate();
+            await CheckForUpdate(false);
 
 
             Default.isConnected = false;
             Default.LastLocationId = "";
+            Default.isConnecting = false;
             Default.Save();
-
-            if (SingleInstance.AlreadyRunning())
-            {
-                MessageBox.Show("EnRagedGUI is already running");
-                Environment.Exit(0);
-                return;
-            }
 
             try
             {
-                JobManager.AddJob(async () => await CheckForUpdate(), s => s.ToRunEvery(12).Hours());
+                JobManager.AddJob(async () => await CheckForUpdate(false), s => s.ToRunEvery(12).Hours());
             }
             catch { }
 
@@ -105,7 +98,6 @@ namespace EnRagedGUI
 
         public void SetStartUpTheme()
         {
-
             //get the current theme used in the application
             ITheme theme = paletteHelper.GetTheme();
 
@@ -122,8 +114,6 @@ namespace EnRagedGUI
             //to apply the changes use the SetTheme function
             paletteHelper.SetTheme(theme);
         }
-
-
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {

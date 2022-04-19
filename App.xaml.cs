@@ -1,5 +1,4 @@
-﻿using Squirrel;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +11,8 @@ using System.IO;
 using EnRagedGUI.Helper;
 using System.Linq;
 using MaterialDesignThemes.Wpf;
+using Squirrel;
+using EnRagedGUI.Domain;
 
 namespace EnRagedGUI
 {
@@ -59,48 +60,85 @@ namespace EnRagedGUI
 
         internal class Globals
         {
-            public const string API_IP = "https://api.enragedvpn.com/";
-            public static readonly string UserDirectory = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath), "Config");
+            public static readonly string UserDirectory = Path.Combine(Path.GetDirectoryName(Environment.CurrentDirectory), "Config");
             public static readonly string ConfigFile = Path.Combine(UserDirectory, "enragedvpn.conf");
             public static readonly string LogFile = Path.Combine(UserDirectory, "log.bin");
-
-            public static Tunnel.Ringlogger log;
-            public static Thread logPrintingThread, transferUpdateThread;
-            public volatile static bool ThreadsRunning;
             public static Snackbar Snackbar;
-
-            public static async Task CheckForUpdate()
+            public static async Task CheckForUpdate(bool manual)
             {
-                try
+                await Task.Run(async () =>
                 {
-                    using var mgr = new UpdateManager("https://github.com/EnRagedVPN/enragedvpn-client");
-                    Console.WriteLine("Checking for updates.");
-                    if (mgr.IsInstalledApp)
+                    try
                     {
-                        Console.WriteLine($"Current Version: v{mgr.CurrentlyInstalledVersion()}");
-                        var updates = await mgr.CheckForUpdate();
-                        if (updates.ReleasesToApply.Any())
-                        {
-                            Console.WriteLine("Updates found. Applying updates.");
-                            var release = await mgr.UpdateApp();
 
-                            if (!Default.isConnected)
+                        using var mgr = new GithubUpdateManager(Default.UpdateUrl);
+
+                        if (!mgr.IsInstalledApp)
+                        {
+                            if (manual)
+                            {
+                                Current.Dispatcher.Invoke((Action)async delegate
+                                {
+                                    var messageDialog = new MessageDialog
+                                    {
+                                        Message = { Text = "There's a configuration issue, reinstalling the application would fix this!" }
+                                    };
+
+                                    await DialogHost.Show(messageDialog, "RootDialog");
+                                });
+                            }
+                            return;
+                        }
+
+                        var newVersion = await mgr.UpdateApp();
+
+                        // optionally restart the app automatically, or ask the user if/when they want to restart
+                        if (newVersion != null)
+                        {
+                            if (Default.isConnected)
                             {
 
-                                var result = MessageBox.Show("A new update has been downloaded, do you want to restart to apply update?");
-                                if (result == MessageBoxResult.Yes)
+                                var view = new MessageDialogPrompt
                                 {
-                                    Console.WriteLine("Updates applied. Restarting app.");
+                                    DataContext = new(),
+                                    Message = { Text = "Are you sure you want to update? You will be disconnected!" },
+                                };
+
+                                //show the dialog
+                                var result = await DialogHost.Show(view, "RootDialog");
+                                if (result.ToString() == "true")
+                                {
                                     UpdateManager.RestartApp();
                                 }
+                                Console.WriteLine(result);
+
+                                return;
+                            }
+                            UpdateManager.RestartApp();
+                        }
+                        else
+                        {
+                            if (manual)
+                            {
+                                Current.Dispatcher.Invoke((Action)async delegate
+                                {
+                                    var messageDialog = new MessageDialog
+                                    {
+                                        Message = { Text = "You are using the latest version!" }
+                                    };
+
+                                    await DialogHost.Show(messageDialog, "RootDialog");
+                                });
                             }
                         }
+
+                        return;
                     }
-                }
-                catch (Exception e)
-                {   //log exception and move on
-                    Console.WriteLine($@"{e.Message}, Error finding latest version");
-                }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                });
             }
         }
 
@@ -115,7 +153,15 @@ namespace EnRagedGUI
         private static void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
             string errorMessage = string.Format("An unhandled exception occurred: {0}", e.Exception.Message);
-            MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            Current.Dispatcher.Invoke((Action)async delegate
+            {
+                var messageDialog = new MessageDialog
+                {
+                    Message = { Text = errorMessage }
+                };
+
+                await DialogHost.Show(messageDialog, "RootDialog");
+            });
         }
 
         private void Application_Exit(object sender, ExitEventArgs e)

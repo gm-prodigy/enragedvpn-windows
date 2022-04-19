@@ -15,18 +15,19 @@
     <Authors>Gm Prodigy</Authors>
     <UseWPF>True</UseWPF>
     <PackageIcon>enragedvpn_logo.png</PackageIcon>
-    <TargetFramework>net5.0-windows</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <SignAssembly>False</SignAssembly>
     <Description>EnRagedVPN</Description>
     <FileVersion></FileVersion>
     <AssemblyVersion></AssemblyVersion>
     <Company>EnRaged Services</Company>
-    <Version>1.0.2</Version>
+    <Version>1.0.0</Version>
     <BaseOutputPath></BaseOutputPath>
     <IsPublishable>True</IsPublishable>
+    <NoWin32Manifest>true</NoWin32Manifest>
     <ApplicationIcon>assets\favicon.ico</ApplicationIcon>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationManifest>enragedvpn.exe.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -50,12 +51,16 @@
   <ItemGroup>
     <None Remove="assets\Enraged_Black.png" />
     <None Remove="assets\Enraged_White.png" />
+    <None Remove="enragedvpn.exe.manifest" />
     <None Remove="Pages\enragedvpn_logo.png" />
     <None Remove="Pages\Enraged_Black.png" />
     <None Remove="Pages\Enraged_White.png" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="enragedvpn.exe.manifest">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="assets\favicon.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -71,12 +76,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Clowd.Squirrel" Version="2.8.40" />
+    <PackageReference Include="Clowd.Squirrel" Version="2.9.5-gdcbdbd" />
     <PackageReference Include="FluentScheduler" Version="5.5.1" />
     <PackageReference Include="MaterialDesignThemes" Version="4.4.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Serilog" Version="2.10.0" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -139,7 +142,6 @@
     <Resource Include="Pages\enragedvpn_logo.png" />
     <Resource Include="Pages\Enraged_Black.png" />
     <Resource Include="Pages\Enraged_White.png" />
-	<AssemblyMetadata Include="SquirrelAwareVersion" Value="1" />
   </ItemGroup>
 
 

@@ -5,34 +5,36 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using static EnRagedGUI.App.Globals;
+using static EnRagedGUI.Properties.Settings;
 
-namespace EnRagedGUI;
-
-class ShowLocations
+namespace EnRagedGUI
 {
-
-    static ShowLocations()
+    class ShowLocations
     {
 
-        using var webClient = new HttpClient();
-        string rawJSON = null;
-        try
+        static ShowLocations()
         {
-            rawJSON = webClient.GetStringAsync($"{API_IP}server/nodes").GetAwaiter().GetResult();
 
+            using var webClient = new HttpClient();
+            string rawJSON = null;
+            try
+            {
+                rawJSON = webClient.GetStringAsync($"{Default.BaseUrl}server/nodes").GetAwaiter().GetResult();
+
+            }
+            catch (Exception)
+            {
+                AllLocations = new();
+                return;
+            }
+
+            LocationCollection locationCollection = JsonConvert.DeserializeObject<LocationCollection>(rawJSON);
+
+            AllLocations = locationCollection.Locations;
         }
-        catch (Exception)
-        {
-            AllLocations = new();
-            return;
-        }
 
-        LocationCollection locationCollection = JsonConvert.DeserializeObject<LocationCollection>(rawJSON);
+        public static List<Location> AllLocations { get; set; }
 
-        AllLocations = locationCollection.Locations;
+        public static List<Location> GetLocations() => AllLocations;
     }
-
-    public static List<Location> AllLocations { get; set; }
-
-    public static List<Location> GetLocations() => AllLocations;
 }

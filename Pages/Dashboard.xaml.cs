@@ -14,7 +14,10 @@ using static EnRagedGUI.App.Globals;
 using static EnRagedGUI.Helper.Wireguard;
 using static EnRagedGUI.Properties.Settings;
 using System.Collections.Immutable;
-
+using System.Windows.Controls.Primitives;
+using EnRagedGUI.Domain;
+using System.Diagnostics;
+using Serilog;
 
 namespace EnRagedGUI
 {
@@ -22,101 +25,163 @@ namespace EnRagedGUI
     public partial class Dashboard : Page
     {
 
+
+        public static Tunnel.Ringlogger Ringloggger;
+        public volatile static bool ThreadsRunning;
+
         public Dashboard()
         {
             InitializeComponent();
-            GetPublicIPAddress();
 
             dropDownLocations.ItemsSource = ShowLocations.GetLocations();
             VersionTextBox.Text = "Version: " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
             themeToggle.IsChecked = Default.DarkTheme;
             killSwitchToggle.IsChecked = Default.KillSwitch;
 
-            log = new Tunnel.Ringlogger(LogFile, "GUI");
+            ExternalIP.Content = Tools.GetExternalIPAddress();
+
+            Ringloggger = new Tunnel.Ringlogger(LogFile, "GUI");
 
             Task.Factory.StartNew(() =>
             {
                 Thread.Sleep(2500);
             }).ContinueWith(t =>
             {
-                //note you can use the message queue from any thread, but just for the demo here we 
                 //need to get the message queue from the snackbar, so need to be on the dispatcher
                 MainSnackbar.MessageQueue.Enqueue("Welcome to EnRagedVPN!");
             }, TaskScheduler.FromCurrentSynchronizationContext());
 
+            ConnectionStatusChanged += Dashboard_ConnectionStatusChanged;
 
+            ExternalIpChanged();
 
             App.Globals.Snackbar = this.MainSnackbar;
         }
 
-        private void Dashboard_Page_Loaded(object sender, RoutedEventArgs e)
+        public static event EventHandler<Models.ConnectionType> ConnectionStatusChanged;
+
+        public void ExternalIpChanged()
+        {
+            ExternalIP.Content = "External IP: " + Tools.GetExternalIPAddress();
+        }
+
+        private async void Dashboard_ConnectionStatusChanged(object sender, Models.ConnectionType e)
+        {
+            var converter = new BrushConverter();
+            Log.Information("Connection status changed to {status}", e.Connection);
+            switch (e.Connection)
+            {
+
+                case Models.ConnectionStatus.Connecting:
+                    ButtonProgressAssist.SetIndicatorForeground(ConnectionButton, (Brush)converter.ConvertFromString("orange"));
+                    ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, true);
+                    break;
+
+                case Models.ConnectionStatus.Connected:
+                    Default.isConnected = true;
+                    ConnectionButton.Background = (Brush)converter.ConvertFromString("#FF51AB52");
+                    ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, true);
+                    ButtonProgressAssist.SetIndicatorForeground(ConnectionButton, (Brush)converter.ConvertFromString("green"));
+                    MainSnackbar.MessageQueue.Enqueue("Connected To " + e.ConnectionName);
+                    ExternalIpChanged();
+                    break;
+
+                case Models.ConnectionStatus.Disconnected:
+                    ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, false);
+                    ConnectionButton.ClearValue(Button.BackgroundProperty);
+                    try
+                    {
+                        await RemoveService();
+                        Default.isConnected = false;
+                        Default.Save();
+                        ExternalIpChanged();
+                        if (e.ConnectionNotification)
+                        {
+                            MainSnackbar.MessageQueue.Enqueue("Disconnected From " + ConnectionInfo.Name + "!");
+                        }
+                    }
+                    catch { }
+                    break;
+
+            }
+        }
+
+        private async void Dashboard_Page_Loaded(object sender, RoutedEventArgs e)
         {
             ThreadsRunning = true;
-            Task.Run(async () => { await TailTransfer(); });
-            Task.Run(async () => { await TailLog(); });
+            await Task.Run(async () => { await TailTransfer(); });
+            await Task.Run(async () => { await TailLog(); });
         }
 
-        public void GetPublicIPAddress()
-        {
-
-            Task.Factory.StartNew(() =>
-            {
-                void bindData()
-                {
-                    if (!string.IsNullOrEmpty(Tools.GetExternalIPAddress()))
-                    {
-                        ExternalIP.Content = "External IP: " + Tools.GetExternalIPAddress();
-                        ExternalIP.Visibility = Visibility.Visible;
-                    }
-                    else
-                    {
-                        ExternalIP.Content = "External IP: ";
-                    }
-                }
-                this.Dispatcher.InvokeAsync(bindData);
-            });
-        }
 
         public async void Connection_Button_Click(object sender, RoutedEventArgs e)
         {
+
             if (dropDownLocations.SelectedValue?.ToString() == null)
             {
-                MessageBox.Show("No Location Selected");
+                var messageDialog = new MessageDialogPrompt
+                {
+                    Message = { Text = "No Location Selected!" },
+                };
+
+                await DialogHost.Show(messageDialog, "RootDialog");
+
+
                 return;
             }
-            var converter = new BrushConverter();
-            ButtonProgressAssist.SetIndicatorForeground(ConnectionButton, (Brush)converter.ConvertFromString("orange"));
-            ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, true);
+
+
+            if (!Default.isConnected)
+            {
+                ConnectionStatusChanged?.Invoke(this, new Models.ConnectionType
+                {
+                    ConnectionId = dropDownLocations.SelectedValue?.ToString(),
+                    ConnectionName = dropDownLocations.Text.ToString(),
+                    Connection = Models.ConnectionStatus.Connecting
+                });
+            }
+
             await StartConnection(dropDownLocations.SelectedValue.ToString());
-            return;
         }
 
         public async Task StartConnection(string locationId)
         {
 
+            Log.Information("Starting Connection");
+            Log.Information("Location: " + locationId);
+            Log.Information("KillSwitch: " + Default.KillSwitch);
+            Log.Information("isConnected" + Default.isConnected.ToString());
             if (Default.isConnected)
             {
-                if (dropDownLocations.SelectedValue.ToString() != ConnectionState.Id)
+
+                if (dropDownLocations.SelectedValue.ToString() != ConnectionInfo.Id)
                 {
-                    var result = MessageBox.Show("Are you sure you want to disconnect from " + ConnectionState.Name + " and connect to " + dropDownLocations.Text + "?", "Confirm", MessageBoxButton.YesNo);
-                    if (result == MessageBoxResult.Yes)
+
+                    var view = new MessageDialogPrompt
+                    {
+                        DataContext = new(),
+                        Message = { Text = "Are you sure you want to disconnect from " + ConnectionInfo.Name + " and connect to " + dropDownLocations.Text + "?" },
+                    };
+
+                    //show the dialog
+                    var result = await DialogHost.Show(view, "RootDialog");
+                    if (result.ToString() == "true")
                     {
                         await RemoveService();
                         Default.isConnected = false;
                         Default.Save();
-                        GetPublicIPAddress();
                         await StartConnection(dropDownLocations.SelectedValue.ToString());
                     }
+
                     return;
                 }
 
-                await RemoveService();
-                Default.isConnected = false;
-                Default.Save();
-                ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, false);
-                var converter = new BrushConverter();
-                ConnectionButton.ClearValue(Button.BackgroundProperty);
-                GetPublicIPAddress();
+                ConnectionStatusChanged?.Invoke(this, new Models.ConnectionType
+                {
+                    Connection = Models.ConnectionStatus.Disconnected,
+                    ConnectionNotification = false
+                }); ;
+
                 return;
             }
 
@@ -127,6 +192,8 @@ namespace EnRagedGUI
 
                 var config = GenerateNewConfigAsync(locationId);
 
+                Log.Debug(await config.ConfigureAwait(true));
+
                 if (string.IsNullOrEmpty(await config.ConfigureAwait(true)))
                 {
                     throw new Exception("Location unavailable, try again later!");
@@ -135,21 +202,23 @@ namespace EnRagedGUI
                 await File.WriteAllBytesAsync(ConfigFile, Encoding.UTF8.GetBytes(await config.ConfigureAwait(true)));
                 await Task.Run(() => Tunnel.Service.Add(ConfigFile, true));
 
-                Default.isConnected = true;
-                Default.Save();
+                ConnectionInfo.Name = dropDownLocations.Text;
+                ConnectionInfo.Id = dropDownLocations.SelectedValue.ToString();
 
-                ConnectionState.Name = dropDownLocations.Text;
-                ConnectionState.Id = dropDownLocations.SelectedValue.ToString();
+                ConnectionStatusChanged?.Invoke(this, new Models.ConnectionType
+                {
+                    ConnectionId = ConnectionInfo.Id,
+                    ConnectionName = ConnectionInfo.Name,
+                    Connection = Models.ConnectionStatus.Connected
+                });
 
             }
             catch (Exception ex)
             {
                 var converter = new BrushConverter();
                 ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, false);
-                log.Write(ex.Message);
                 MessageBox.Show(ex.Message);
                 await RemoveService();
-                GetPublicIPAddress();
             }
             return;
         }
@@ -161,34 +230,35 @@ namespace EnRagedGUI
 
             while (ThreadsRunning)
             {
-                var lines = log.FollowFromCursor(ref cursor);
+                var lines = Ringloggger.FollowFromCursor(ref cursor);
+
+                foreach (var line in lines)
+                {
+                    Console.WriteLine(line);
+                }
 
                 lines.Where(x => x.Contains("Startup complete")).ToImmutableList().ForEach(x =>
                 {
                     Dispatcher.Invoke(() =>
                     {
-                        GetPublicIPAddress();
-                        ConnectionButton.Background = (Brush)converter.ConvertFromString("#FF51AB52");
-                        ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, true);
-                        ButtonProgressAssist.SetIndicatorForeground(ConnectionButton, (Brush)converter.ConvertFromString("green"));
-                        MainSnackbar.MessageQueue.Enqueue("Connected To " + ConnectionState.Name);
+                        ConnectionStatusChanged?.Invoke(this, new Models.ConnectionType
+                        {
+                            ConnectionId = ConnectionInfo.Id,
+                            ConnectionName = ConnectionInfo.Name,
+                            Connection = Models.ConnectionStatus.Connected
+                        });
                     });
+
                 });
 
                 lines.Where(x => x.Contains("retrying (try 3)")).ToImmutableList().ForEach(x =>
                 {
                     Dispatcher.Invoke(() =>
                     {
-                        if (Default.isConnected)
+                        ConnectionStatusChanged?.Invoke(this, new Models.ConnectionType
                         {
-                            Default.isConnected = false;
-                            Default.Save();
-                            GetPublicIPAddress();
-                            MainSnackbar.MessageQueue.Enqueue("Disconnected From " + ConnectionState.Name + "!");
-                        }
-                        ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, false);
-                        var converter = new BrushConverter();
-                        ConnectionButton.ClearValue(Button.BackgroundProperty);
+                            Connection = Models.ConnectionStatus.Disconnected
+                        });
                     });
                 });
 
@@ -196,21 +266,16 @@ namespace EnRagedGUI
                 {
                     Dispatcher.Invoke(() =>
                     {
-                        if (Default.isConnected)
+                        ConnectionStatusChanged?.Invoke(this, new Models.ConnectionType
                         {
-                            Default.isConnected = false;
-                            Default.Save();
-                            GetPublicIPAddress();
-                        }
-                        MainSnackbar.MessageQueue.Enqueue("Disconnected From " + ConnectionState.Name + "!");
-                        ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, false);
-                        var converter = new BrushConverter();
-                        ConnectionButton.ClearValue(Button.BackgroundProperty);
+                            Connection = Models.ConnectionStatus.Disconnected,
+                            ConnectionNotification = true
+                        });
                     });
                 });
 
                 //Suspending the thread seems to bring cpu usage 
-                try { Thread.Sleep(300); } catch { }
+                try { Thread.Sleep(300); } catch { break; }
             }
         }
 
@@ -273,10 +338,7 @@ namespace EnRagedGUI
             }
         }
 
-
-        //Theme Code ========================>
-        public bool IsDarkTheme { get; set; }
-        private readonly PaletteHelper paletteHelper = new PaletteHelper();
+        private readonly PaletteHelper paletteHelper = new();
 
         private void ToggleTheme(object sender, RoutedEventArgs e)
         {
@@ -345,15 +407,26 @@ namespace EnRagedGUI
                         Default.isConnected = false;
                         Default.Save();
 
-                        await new Dashboard().StartConnection(ConnectionState.Id);
+                        await new Dashboard().StartConnection(ConnectionInfo.Id);
                     });
                 });
 
             }
         }
 
+        private async void Btn_Update_Click(object sender, RoutedEventArgs e)
+        {
 
+            await CheckForUpdate(true);
 
+            //var messageDialog = new MessageDialog
+            //{
+            //    Message = { Text = "Nothing to show" }
+            //};
+
+            //await DialogHost.Show(messageDialog, "RootDialog");
+
+        }
 
     }
 }

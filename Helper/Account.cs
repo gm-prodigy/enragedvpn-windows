@@ -19,7 +19,7 @@ namespace EnRagedGUI.Helper
         {
 
             using var client = new HttpClient();
-            client.BaseAddress = new Uri(API_IP);
+            client.BaseAddress = new Uri(Default.BaseUrl);
             client.Timeout = TimeSpan.FromSeconds(10);
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));

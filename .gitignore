@@ -17,6 +17,9 @@
 mono_crash.*
 
 squirrel.ps1
+publish.ps1
+
+.bin
 
 # Build results
 [Dd]ebug/

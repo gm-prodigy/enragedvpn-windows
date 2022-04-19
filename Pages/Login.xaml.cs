@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using static EnRagedGUI.JsonObjects.LoginJsonClass;
 using static EnRagedGUI.App.Globals;
+using static EnRagedGUI.Properties.Settings;
 
 namespace EnRagedGUI
 {
@@ -23,9 +24,8 @@ namespace EnRagedGUI
             InitializeComponent();
         }
 
-        //Theme Code ========================>
         public bool IsDarkTheme { get; set; }
-        private readonly PaletteHelper paletteHelper = new PaletteHelper();
+        private readonly PaletteHelper paletteHelper = new();
 
         static bool IsValidEmail(string email)
         {
@@ -57,7 +57,7 @@ namespace EnRagedGUI
                 throw new Exception("Email not valid!");
             }
             using var client = new HttpClient();
-            client.BaseAddress = new Uri(API_IP);
+            client.BaseAddress = new Uri(Default.BaseUrl);
             client.Timeout = TimeSpan.FromSeconds(5);
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -67,7 +67,7 @@ namespace EnRagedGUI
             {
                     new KeyValuePair<string, string>("email", email),
                     new KeyValuePair<string, string>("password", password)
-                });
+            });
 
             //send request
             HttpResponseMessage responseMessage = await client.PostAsync("/auth/login", formContent);
@@ -94,7 +94,7 @@ namespace EnRagedGUI
             }
             else
             {
-                MessageBox.Show("Not sure what went wrong!");
+                MessageBox.Show("Maybe Login server is down?");
             }
         }
 

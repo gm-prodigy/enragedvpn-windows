@@ -21,15 +21,15 @@
      TextElement.Foreground="{DynamicResource MaterialDesignBody}" WindowStyle="ThreeDBorderWindow"
         MouseLeftButtonDown="OnMouseLeftButtonDown">
 
+    <materialDesign:DialogHost Identifier="RootDialog" SnackbarMessageQueue="{Binding ElementName=MainSnackbar, Path=MessageQueue}">
+        <materialDesign:Card Background="{DynamicResource MaterialDesignPaper}"  materialDesign:ShadowAssist.ShadowDepth="Depth4">
 
-    <materialDesign:Card Background="{DynamicResource MaterialDesignPaper}"  materialDesign:ShadowAssist.ShadowDepth="Depth4">
+            <StackPanel>
 
+                <Frame x:Name="MainWindowFrame" NavigationUIVisibility="Hidden"></Frame>
 
-        <StackPanel>
+            </StackPanel>
 
-            <Frame x:Name="MainWindowFrame" NavigationUIVisibility="Hidden"></Frame>
-
-        </StackPanel>
-
-    </materialDesign:Card>
+        </materialDesign:Card>
+    </materialDesign:DialogHost>
 </Window>

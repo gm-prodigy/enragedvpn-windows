@@ -16,7 +16,7 @@ namespace EnRagedGUI.Helper
     public class Wireguard
     {
 
-        public static class ConnectionState
+        public static class ConnectionInfo
         {
             private static string name;
             private static string id;
@@ -35,7 +35,7 @@ namespace EnRagedGUI.Helper
             Default.LastLocationId = selectedLocation;
 
             using var client = new HttpClient();
-            client.BaseAddress = new Uri(API_IP);
+            client.BaseAddress = new Uri(Default.BaseUrl);
             client.Timeout = TimeSpan.FromSeconds(10);
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -45,8 +45,6 @@ namespace EnRagedGUI.Helper
             HttpResponseMessage responseMessage = await client.GetAsync($"/server/nodes/generate/{selectedLocation}");
 
             var responseJson = await responseMessage.Content.ReadAsStringAsync();
-
-            Console.WriteLine(responseJson);
 
             var ServerObject = System.Text.Json.JsonSerializer.Deserialize<Root>(responseJson);
 
