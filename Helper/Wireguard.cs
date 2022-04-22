@@ -129,7 +129,7 @@ namespace EnRagedGUI.Helper
 PrivateKey = {privateKey}
 Address = {address}
 DNS = {dns}
-
+{(Default.MtuManual ? $"MTU = {Default.MtuManualValue}" : "")}
 [Peer]
 PublicKey = {publicKey}
 PresharedKey = {presharedKey}

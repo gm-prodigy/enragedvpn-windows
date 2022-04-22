@@ -1,41 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace EnRagedGUI.Helper
 {
     public sealed class SingleInstance
     {
+        private static Mutex mutex;
         public static bool AlreadyRunning()
         {
-            bool running = false;
-            try
-            {
-                // Getting collection of process  
-                Process currentProcess = Process.GetCurrentProcess();
+            string uniqueName = null;
+            var applicationName = Path.GetFileName(Assembly.GetEntryAssembly().GetName().Name);
+            uniqueName ??= string.Format("{0}_{1}_{2}",
+                Environment.MachineName,
+                Environment.UserName,
+                applicationName);
 
-                // Check with other process already running   
-                foreach (var p in Process.GetProcesses())
-                {
-                    if (p.Id != currentProcess.Id) // Check running process   
-                    {
-                        if (p.ProcessName.Equals(currentProcess.ProcessName) == true)
-                        {
-                            running = true;
-                            IntPtr hFound = p.MainWindowHandle;
-                            if (User32API.IsIconic(hFound)) // If application is in ICONIC mode then  
-                                User32API.ShowWindow(hFound, User32API.SW_RESTORE);
-                            User32API.SetForegroundWindow(hFound); // Activate the window, if process is already running  
-                            break;
-                        }
-                    }
-                }
-            }
-            catch { }
-            return running;
+            mutex = new Mutex(true, uniqueName, out bool isOneTimeLaunch);
+            return isOneTimeLaunch;
         }
     }
 }

@@ -4,12 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using static EnRagedGUI.Properties.Settings;
-
-using System.Reflection;
 using System.Security.Principal;
 using System.IO;
 using EnRagedGUI.Helper;
-using System.Linq;
 using MaterialDesignThemes.Wpf;
 using Squirrel;
 using EnRagedGUI.Domain;
@@ -19,11 +16,12 @@ namespace EnRagedGUI
 
     public partial class App : Application
     {
-
+        private static Mutex mutex;
         protected override void OnStartup(StartupEventArgs e)
         {
 
             Directory.CreateDirectory(Globals.UserDirectory);
+            DispatcherUnhandledException += App_DispatcherUnhandledException;
 
             if (!IsRunAsAdministrator())
             {
@@ -31,7 +29,7 @@ namespace EnRagedGUI
                 // app as administrator in a new process.
                 String appStartPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
 
-                var processInfo = new ProcessStartInfo(appStartPath + @"\EnRagedVPN.exe")
+                var processInfo = new ProcessStartInfo(appStartPath + @"\enragedvpn.exe")
                 {
                     // The following properties run the new process as administrator
                     UseShellExecute = true,
@@ -43,6 +41,7 @@ namespace EnRagedGUI
                 {
                     Process.Start(processInfo);
                     Application.Current.Shutdown();
+
                 }
                 catch (Exception)
                 {
@@ -52,10 +51,15 @@ namespace EnRagedGUI
                 }
                 return;
             }
-
-            DispatcherUnhandledException += App_DispatcherUnhandledException;
-
-            base.OnStartup(e);
+            else if (!SingleInstance.AlreadyRunning())
+            {
+                MessageBox.Show("EnRagedVPN is already running", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Environment.Exit(0);
+            }
+            else
+            {
+                base.OnStartup(e);
+            }
         }
 
         internal class Globals
@@ -92,9 +96,11 @@ namespace EnRagedGUI
 
                         var newVersion = await mgr.UpdateApp();
 
+
                         // optionally restart the app automatically, or ask the user if/when they want to restart
                         if (newVersion != null)
                         {
+
                             if (Default.isConnected)
                             {
 
@@ -114,6 +120,19 @@ namespace EnRagedGUI
 
                                 return;
                             }
+
+                            if (!manual)
+                            {
+                                var view = new MessageDialogPrompt
+                                {
+                                    DataContext = new(),
+                                    Message = { Text = "Are you sure you want to update? You will be disconnected!" },
+                                };
+
+                                //show the dialog
+                                var result = await DialogHost.Show(view, "RootDialog");
+                            }
+
                             UpdateManager.RestartApp();
                         }
                         else
@@ -136,7 +155,14 @@ namespace EnRagedGUI
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        var view = new MessageDialogPrompt
+                        {
+                            DataContext = new(),
+                            Message = { Text = ex.Message },
+                        };
+
+                        //show the dialog
+                        var result = await DialogHost.Show(view, "RootDialog");
                     }
                 });
             }
@@ -166,6 +192,7 @@ namespace EnRagedGUI
 
         private void Application_Exit(object sender, ExitEventArgs e)
         {
+            mutex.Dispose();
             Tunnel.Service.Remove(Globals.ConfigFile, true);
             try { File.Delete(Globals.LogFile); } catch { }
             try { File.Delete(Globals.ConfigFile); } catch { }

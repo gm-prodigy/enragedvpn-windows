@@ -22,8 +22,8 @@ namespace EnRagedGUI
             // run Squirrel first, as the app may exit after these run
             SquirrelAwareApp.HandleEvents(
                 onInitialInstall: OnAppInstall,
-                onAppUninstall: OnAppUninstall
-                //onEveryRun: OnAppRun
+                onAppUninstall: OnAppUninstall,
+                onEveryRun: OnAppRun
                 );
 
 
@@ -49,20 +49,10 @@ namespace EnRagedGUI
                 return;
             }
 
-            if (SingleInstance.AlreadyRunning())
-            {
-                MessageBox.Show("EnRagedGUI is already running", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                Environment.Exit(0);
-                return;
-            }
-
-            
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console()
                 .CreateLogger();
-
-            Log.Information("Hello, world!");
 
             var application = new App();
             application.Startup += (e, o) => { };
@@ -86,7 +76,7 @@ namespace EnRagedGUI
         {
             tools.SetProcessAppUserModelId();
             // show a welcome message when the app is first installed
-            if (firstRun) MessageBox.Show("First time to EnRagedVPN?");
+            //if (firstRun) MessageBox.Show("First time to EnRagedVPN?");
         }
     }
 }

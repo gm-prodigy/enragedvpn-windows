@@ -37,10 +37,9 @@ namespace EnRagedGUI
         {
             await CheckForUpdate(false);
 
-
+            Default.isConnecting = false;
             Default.isConnected = false;
             Default.LastLocationId = "";
-            Default.isConnecting = false;
             Default.Save();
 
             try

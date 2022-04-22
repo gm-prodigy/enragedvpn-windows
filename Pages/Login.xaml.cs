@@ -11,6 +11,7 @@ using System.Windows.Media.Imaging;
 using static EnRagedGUI.JsonObjects.LoginJsonClass;
 using static EnRagedGUI.App.Globals;
 using static EnRagedGUI.Properties.Settings;
+using EnRagedGUI.Domain;
 
 namespace EnRagedGUI
 {
@@ -53,7 +54,12 @@ namespace EnRagedGUI
 
             if (!IsValidEmail(email))
             {
-                MessageBox.Show("Email not valid!");
+                var messageDialog = new MessageDialog
+                {
+                    Message = { Text = "Email not valid!" }
+                };
+
+                await DialogHost.Show(messageDialog, "RootDialog");
                 throw new Exception("Email not valid!");
             }
             using var client = new HttpClient();
@@ -90,11 +96,21 @@ namespace EnRagedGUI
             }
             else if (userObject.code == 401)
             {
-                MessageBox.Show("Wrong username or password!");
+                var messageDialog = new MessageDialog
+                {
+                    Message = { Text = "Wrong username or password!" }
+                };
+
+                await DialogHost.Show(messageDialog, "RootDialog");
             }
             else
             {
-                MessageBox.Show("Maybe Login server is down?");
+                var messageDialog = new MessageDialog
+                {
+                    Message = { Text = "Maybe Login server is down?" }
+                };
+
+                await DialogHost.Show(messageDialog, "RootDialog");
             }
         }
 

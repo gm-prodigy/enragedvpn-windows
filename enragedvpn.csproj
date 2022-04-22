@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <RootNamespace>EnRagedGUI</RootNamespace>
     <UseWindowsForms>False</UseWindowsForms>
     <AssemblyName>enragedvpn</AssemblyName>
@@ -22,7 +22,7 @@
     <FileVersion></FileVersion>
     <AssemblyVersion></AssemblyVersion>
     <Company>EnRaged Services</Company>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <BaseOutputPath></BaseOutputPath>
     <IsPublishable>True</IsPublishable>
     <ApplicationIcon>assets\favicon.ico</ApplicationIcon>

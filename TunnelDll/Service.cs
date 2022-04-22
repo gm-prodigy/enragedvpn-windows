@@ -32,7 +32,7 @@ namespace Tunnel
             var shortName = String.Format("WireGuardTunnel${0}", tunnelName);
             var longName = String.Format("{0}: {1}", LongName, tunnelName);
             var exeName = Process.GetCurrentProcess().MainModule.FileName;
-            var pathAndArgs = String.Format("\"{0}\" /service \"{1}\" {2}", exeName, configFile, Process.GetCurrentProcess().Id); //TODO: This is not the proper way to escape file args.
+            var pathAndArgs = String.Format("\"{0}\" /service \"{1}\" {2}", exeName, configFile, Environment.ProcessId); //TODO: This is not the proper way to escape file args.
 
             var scm = Win32.OpenSCManager(null, null, Win32.ScmAccessRights.AllAccess);
             if (scm == IntPtr.Zero)

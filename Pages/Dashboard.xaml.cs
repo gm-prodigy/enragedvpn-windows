@@ -18,27 +18,21 @@ using System.Windows.Controls.Primitives;
 using EnRagedGUI.Domain;
 using System.Diagnostics;
 using Serilog;
+using EnRagedGUI.Models;
 
 namespace EnRagedGUI
 {
 
     public partial class Dashboard : Page
     {
-
-
-        public static Tunnel.Ringlogger Ringloggger;
-        public volatile static bool ThreadsRunning;
-
+        private Tunnel.Ringlogger Ringloggger;
+        private volatile bool ThreadsRunning;
+        private Thread LogPrintingThread, TransferUpdateThread;
         public Dashboard()
         {
             InitializeComponent();
-
-            dropDownLocations.ItemsSource = ShowLocations.GetLocations();
-            VersionTextBox.Text = "Version: " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
-            themeToggle.IsChecked = Default.DarkTheme;
-            killSwitchToggle.IsChecked = Default.KillSwitch;
-
-            ExternalIP.Content = Tools.GetExternalIPAddress();
+            Console.WriteLine("Dashboard");
+            StartupEvents();
 
             Ringloggger = new Tunnel.Ringlogger(LogFile, "GUI");
 
@@ -50,18 +44,41 @@ namespace EnRagedGUI
                 //need to get the message queue from the snackbar, so need to be on the dispatcher
                 MainSnackbar.MessageQueue.Enqueue("Welcome to EnRagedVPN!");
             }, TaskScheduler.FromCurrentSynchronizationContext());
-
+            ConnectionStatusChanged -= Dashboard_ConnectionStatusChanged;
             ConnectionStatusChanged += Dashboard_ConnectionStatusChanged;
 
             ExternalIpChanged();
 
             App.Globals.Snackbar = this.MainSnackbar;
+
+            LogPrintingThread = new Thread(new ThreadStart(TailLog));
+            TransferUpdateThread = new Thread(new ThreadStart(TailTransfer));
+        }
+
+        public void StartupEvents()
+        {
+            dropDownLocations.ItemsSource = ShowLocations.GetLocations();
+            VersionTextBox.Text = "Version: " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            themeToggle.IsChecked = Default.DarkTheme;
+            killSwitchToggle.IsChecked = Default.KillSwitch;
+            ExternalIP.Content = Tools.GetExternalIPAddress();
+            if (Default.MtuManual)
+            {
+                MtuManual_RadioButton.IsChecked = true;
+                MtuManualTextBox.Visibility = Visibility.Visible;
+                MtuManualTextBox.Text = Default.MtuManualValue.ToString();
+            }
+            else
+            {
+                MtuAuto_RadioButton.IsChecked = true;
+            }
         }
 
         public static event EventHandler<Models.ConnectionType> ConnectionStatusChanged;
 
         public void ExternalIpChanged()
         {
+            //Log.Information("External IP: {ExternalIp}", Tools.GetExternalIPAddress());
             ExternalIP.Content = "External IP: " + Tools.GetExternalIPAddress();
         }
 
@@ -75,20 +92,29 @@ namespace EnRagedGUI
                 case Models.ConnectionStatus.Connecting:
                     ButtonProgressAssist.SetIndicatorForeground(ConnectionButton, (Brush)converter.ConvertFromString("orange"));
                     ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, true);
+                    Log.Information("Connection status changed to connecting");
+                    Default.isConnecting = true;
+                    Log.Information("isConnecting set to true ", Default.isConnecting.ToString());
                     break;
 
                 case Models.ConnectionStatus.Connected:
+                    Default.isConnecting = false;
                     Default.isConnected = true;
                     ConnectionButton.Background = (Brush)converter.ConvertFromString("#FF51AB52");
                     ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, true);
                     ButtonProgressAssist.SetIndicatorForeground(ConnectionButton, (Brush)converter.ConvertFromString("green"));
                     MainSnackbar.MessageQueue.Enqueue("Connected To " + e.ConnectionName);
+                    HintAssist.SetHint(dropDownLocations, "Connected: " + e.ConnectionName);
+                    HintAssist.SetBackground(dropDownLocations, Brushes.Green);
                     ExternalIpChanged();
                     break;
 
                 case Models.ConnectionStatus.Disconnected:
+                    Default.isConnecting = false;
                     ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, false);
                     ConnectionButton.ClearValue(Button.BackgroundProperty);
+                    HintAssist.SetHint(dropDownLocations, "Disconnected");
+                    HintAssist.SetBackground(dropDownLocations, Brushes.Red);
                     try
                     {
                         await RemoveService();
@@ -109,36 +135,25 @@ namespace EnRagedGUI
         private async void Dashboard_Page_Loaded(object sender, RoutedEventArgs e)
         {
             ThreadsRunning = true;
-            await Task.Run(async () => { await TailTransfer(); });
-            await Task.Run(async () => { await TailLog(); });
+            LogPrintingThread.Start();
+            TransferUpdateThread.Start();
         }
 
 
         public async void Connection_Button_Click(object sender, RoutedEventArgs e)
         {
+            Log.Information("Default.isConnecting ", Default.isConnecting.ToString());
 
             if (dropDownLocations.SelectedValue?.ToString() == null)
             {
-                var messageDialog = new MessageDialogPrompt
+                MessageDialogPrompt messageDialog = new MessageDialogPrompt
                 {
                     Message = { Text = "No Location Selected!" },
                 };
 
                 await DialogHost.Show(messageDialog, "RootDialog");
 
-
                 return;
-            }
-
-
-            if (!Default.isConnected)
-            {
-                ConnectionStatusChanged?.Invoke(this, new Models.ConnectionType
-                {
-                    ConnectionId = dropDownLocations.SelectedValue?.ToString(),
-                    ConnectionName = dropDownLocations.Text.ToString(),
-                    Connection = Models.ConnectionStatus.Connecting
-                });
             }
 
             await StartConnection(dropDownLocations.SelectedValue.ToString());
@@ -151,6 +166,25 @@ namespace EnRagedGUI
             Log.Information("Location: " + locationId);
             Log.Information("KillSwitch: " + Default.KillSwitch);
             Log.Information("isConnected" + Default.isConnected.ToString());
+
+            if (Default.isConnecting)
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    ConnectionStatusChanged?.Invoke(this, new Models.ConnectionType
+                    {
+                        Connection = ConnectionStatus.Disconnected,
+                        ConnectionNotification = false
+                    });
+                });
+                return;
+            }
+
+            ConnectionStatusChanged?.Invoke(this, new Models.ConnectionType
+            {
+                Connection = Models.ConnectionStatus.Connecting
+            });
+
             if (Default.isConnected)
             {
 
@@ -205,25 +239,30 @@ namespace EnRagedGUI
                 ConnectionInfo.Name = dropDownLocations.Text;
                 ConnectionInfo.Id = dropDownLocations.SelectedValue.ToString();
 
-                ConnectionStatusChanged?.Invoke(this, new Models.ConnectionType
-                {
-                    ConnectionId = ConnectionInfo.Id,
-                    ConnectionName = ConnectionInfo.Name,
-                    Connection = Models.ConnectionStatus.Connected
-                });
-
             }
             catch (Exception ex)
             {
                 var converter = new BrushConverter();
                 ButtonProgressAssist.SetIsIndeterminate(ConnectionButton, false);
-                MessageBox.Show(ex.Message);
-                await RemoveService();
+                ConnectionStatusChanged?.Invoke(this, new Models.ConnectionType
+                {
+                    Connection = ConnectionStatus.Disconnected,
+                    ConnectionNotification = false
+                });
+
+                var view = new MessageDialog
+                {
+                    DataContext = new(),
+                    Message = { Text = "This location is unavailable at the moment!" },
+                };
+
+                //show the dialog
+                var result = await DialogHost.Show(view, "RootDialog");
             }
             return;
         }
 
-        private async Task TailLog()
+        private void TailLog()
         {
             var converter = new BrushConverter();
             var cursor = Tunnel.Ringlogger.CursorAll;
@@ -231,11 +270,6 @@ namespace EnRagedGUI
             while (ThreadsRunning)
             {
                 var lines = Ringloggger.FollowFromCursor(ref cursor);
-
-                foreach (var line in lines)
-                {
-                    Console.WriteLine(line);
-                }
 
                 lines.Where(x => x.Contains("Startup complete")).ToImmutableList().ForEach(x =>
                 {
@@ -247,6 +281,7 @@ namespace EnRagedGUI
                             ConnectionName = ConnectionInfo.Name,
                             Connection = Models.ConnectionStatus.Connected
                         });
+
                     });
 
                 });
@@ -279,7 +314,7 @@ namespace EnRagedGUI
             }
         }
 
-        public async Task TailTransfer()
+        void TailTransfer()
         {
             Tunnel.Driver.Adapter adapter = null;
             while (ThreadsRunning)
@@ -317,19 +352,15 @@ namespace EnRagedGUI
                         tx += peer.TxBytes;
                     }
 
-                    await Task.Factory.StartNew(() =>
+                    Dispatcher.Invoke(() =>
                     {
                         var usage = Tools.FormatBytes(tx + rx);
 
-                        void bindData()
+                        if (!string.IsNullOrEmpty(usage))
                         {
-                            if (!string.IsNullOrEmpty(usage))
-                            {
-                                Usage.Visibility = Visibility.Visible;
-                                Usage.Content = "Usage: " + usage;
-                            }
+                            Usage.Visibility = Visibility.Visible;
+                            Usage.Content = "Usage: " + usage;
                         }
-                        this.Dispatcher.InvokeAsync(bindData);
                     });
 
                     Thread.Sleep(1000);
@@ -380,6 +411,7 @@ namespace EnRagedGUI
             }
 
             MainWindow mainWindow = Application.Current.MainWindow as MainWindow;
+            mainWindow.MainWindowFrame.Content = null;
             mainWindow.MainWindowFrame.Content = new Login();
         }
 
@@ -412,6 +444,34 @@ namespace EnRagedGUI
                 });
 
             }
+        }
+
+        private void MtuManual_RadioButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (MtuManual_RadioButton.IsChecked == true)
+            {
+                Default.MtuManual = true;
+                Default.Save();
+
+                MtuManualTextBox.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void MtuAuto_RadioButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (MtuAuto_RadioButton.IsChecked == true)
+            {
+                Default.MtuManual = false;
+                Default.Save();
+
+                MtuManualTextBox.Visibility = Visibility.Hidden;
+            }
+        }
+
+        private void MtuManualTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            Default.MtuManualValue = MtuManualTextBox.Text;
+            Default.Save();
         }
 
         private async void Btn_Update_Click(object sender, RoutedEventArgs e)

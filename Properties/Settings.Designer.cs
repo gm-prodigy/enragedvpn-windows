@@ -172,5 +172,29 @@ namespace EnRagedGUI.Properties {
                 this["isConnecting"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool MtuManual {
+            get {
+                return ((bool)(this["MtuManual"]));
+            }
+            set {
+                this["MtuManual"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public string MtuManualValue {
+            get {
+                return ((string)(this["MtuManualValue"]));
+            }
+            set {
+                this["MtuManualValue"] = value;
+            }
+        }
     }
 }
